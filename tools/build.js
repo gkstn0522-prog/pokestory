@@ -22,6 +22,7 @@ const html = `<!doctype html>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 </head>
 <body>
+<script>window.__BUILD_ID='${buildId}';</script>
 ${game}
 <script>
 if ('serviceWorker' in navigator) {
@@ -32,6 +33,7 @@ if ('serviceWorker' in navigator) {
 </html>
 `;
 fs.writeFileSync(path.join(dist, 'index.html'), html);
+fs.writeFileSync(path.join(dist, 'version.json'), JSON.stringify({ build: buildId }));
 
 const sw = fs.readFileSync(path.join(root, 'web', 'sw.js'), 'utf8').replace('__BUILD_ID__', buildId);
 fs.writeFileSync(path.join(dist, 'sw.js'), sw);
