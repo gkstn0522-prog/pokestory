@@ -184,11 +184,11 @@ small{color:var(--muted);font-weight:400}
 .sheet-h{display:flex;align-items:center;gap:10px}
 .sheet-h h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:22px;flex:1;min-width:0}
 .x{background:var(--panel2);border:1px solid var(--line);border-radius:9px;width:34px;height:34px;cursor:pointer;flex:none}
-.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;z-index:30;width:min(440px,calc(100% - 32px));pointer-events:none}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px;z-index:30;width:min(440px,calc(100% - 32px));pointer-events:none}
 .toast{background:#2b3346;border:1px solid var(--muted);border-radius:12px;padding:10px 12px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:tin .25s ease-out}
 .toast.gold{border-color:var(--accent)}
 .toast.bad{border-color:var(--bad)}
-@keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@keyframes tin{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
 
 .starter{position:fixed;inset:0;background:var(--bg);z-index:40;overflow:auto;padding:24px 16px}
 .starter-in{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
@@ -198,6 +198,9 @@ small{color:var(--muted);font-weight:400}
 .st-card:hover{border-color:var(--accent)}
 .st-card .mon-n{font-size:24px}
 .ver{color:var(--muted);font-size:11px;text-align:center}
+.pn h4{margin:6px 0 2px;font-family:var(--f-display);font-weight:400;font-size:18px}
+.pn ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6}
+.pn .d{color:var(--muted);font-size:11px}
 .dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:5px}
 .dcell{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:5px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;min-width:0}
 .dcell .dno{color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
@@ -264,7 +267,9 @@ textarea.code{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--
 
 <script>
 'use strict';
-const GAME_VERSION='1.0.6';
+const GAME_VERSION='1.0.7';
+const PATCH_NOTES=[
+ {v:'1.0.7',d:'2026-10-10',items:['패치노트를 볼 수 있어요 (트레이너 탭)','포켓몬 별명 기능: 능력치 화면에서 "귀요미(이상해씨)"처럼 이름을 붙일 수 있어요','전설의 포켓몬이 더 이상 일반 스테이지와 알에서 나오지 않습니다','포켓몬 알 가격: 5만 골드부터 1만씩 오르고 최대 25만 골드','6등급 이상 스킬의 주문서·숙련 비용이 등급마다 2배로 증가','밸런스 조정: 모든 스킬 위력 50%로 하향, 스킬 드랍 확률 20% 하향','안내 메시지가 화면 위쪽에 표시됩니다']}];
 const ADMIN_PW='0522';
 const SPRITE_FRONT=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 const SPRITE_BACK=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`;
@@ -355,7 +360,7 @@ const TRAITS={
  illuminate:{n:'발광',g:0,d:'파티에 있으면 포획 확률 +25%'},
  earlybird:{n:'일찍기상',g:0,d:'웨이브 시작 후 6초 동안 스킬 시전 간격이 절반'},
  guts:{n:'근성',g:1,d:'체력 50% 이하일 때 공격·특수공격 +40%'},
- technician:{n:'테크니션',g:1,d:'위력 2.0 이하 기술과 박치기 데미지 +50%'},
+ technician:{n:'테크니션',g:1,d:'위력 1.0 이하 기술과 박치기 데미지 +50%'},
  sniper:{n:'스나이퍼',g:1,d:'급소 데미지 2배 → 3배'},
  superluck:{n:'대운',g:1,d:'급소 확률 +12%p'},
  hustle:{n:'의욕',g:1,d:'물리 공격 +40%, 대신 15% 확률로 빗나감'},
@@ -435,10 +440,10 @@ const REGIONS=[
  {name:'무지개시티 정원',col:'#3c5a2a',pool:[43,69,102,114,48,46],bt:'thickfat'},
  {name:'보라타운 포켓몬타워',col:'#3a2850',pool:[92,93,41,104,96],bt:'levitate'},
  {name:'실프주식회사',col:'#585020',pool:[81,100,96,84,21,132],bt:'pressure'},
- {name:'쌍둥이섬',col:'#1d4e5e',pool:[72,90,86,120,98,58,77],bt:'flashfire',leg:144},
- {name:'무인발전소',col:'#4a4a22',pool:[81,100,25,125,111,27],bt:'solidrock',leg:145},
- {name:'챔피언로드',col:'#40304f',pool:[74,75,41,42,95,67,148],bt:'multiscale',leg:146},
- {name:'석영고원',col:'#3b2d2d',pool:[147,148,123,127,128,131],bt:'intimidate',leg:150}];
+ {name:'쌍둥이섬',col:'#1d4e5e',pool:[72,90,86,120,98,58,77],bt:'flashfire'},
+ {name:'무인발전소',col:'#4a4a22',pool:[81,100,25,125,111,27],bt:'solidrock'},
+ {name:'챔피언로드',col:'#40304f',pool:[74,75,41,42,95,67,148],bt:'multiscale'},
+ {name:'석영고원',col:'#3b2d2d',pool:[147,148,123,127,128,131],bt:'intimidate'}];
 const GYMS=[
  {leader:'웅',title:'회색시티 체육관',badge:'회색배지',col:'#a8a29a',team:[74,111,95]},
  {leader:'이슬',title:'블루시티 체육관',badge:'블루배지',col:'#6f9bf2',team:[120,118,121]},
@@ -489,6 +494,8 @@ function save(){if(!S)return;try{S.last=Date.now();localStorage.setItem(KEY,JSON
 function load(){try{let t=localStorage.getItem(KEY);if(!t)for(const k of OLD_KEYS){t=localStorage.getItem(k);if(t)break}return t?JSON.parse(t):null}catch(e){return null}}
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+const monName=m=>m.nick?`${esc(m.nick)}(${D(m.id).name})`:D(m.id).name;
+const monShort=m=>m.nick||D(m.id).name;
 const monBy=u=>S.mons.find(m=>m.uid===u);
 const skBy=u=>S.bag.find(s=>s.uid===u);
 const partyMons=()=>S.party.slice(0,slotsFor(S.maxStage)).map(monBy).filter(Boolean);
@@ -509,7 +516,8 @@ function roleOf(m){const i=S.party.slice(0,slotsFor(S.maxStage)).indexOf(m.uid);
 function combatStats(m){const st=monStats(m),r=ROLE_MOD[roleOf(m)];if(!r)return st;return{hp:st.hp*r.hp,atk:st.atk*r.atk,spa:st.spa*r.atk,def:st.def*r.def,spd:st.spd*r.def,spe:st.spe*r.spe}}
 const maxHp=m=>Math.floor(combatStats(m).hp*HP_MUL*(1+(B.hpPct||0)/100));
 function syncParty(){partyMons().forEach(m=>{const rt=getRt(m);syncMax(m)})}
-function MV(s){const a=MOVES[s.t][s.m];return{name:a[0],pow:a[1],cd:a[2],kind:a[3],hits:a[4]||1,cat:a[5]||'p'}}
+const POW_SCALE=0.5;
+function MV(s){const a=MOVES[s.t][s.m];return{name:a[0],pow:a[1]*POW_SCALE,cd:a[2],kind:a[3],hits:a[4]||1,cat:a[5]||'p'}}
 function augs(s){const r={};[s.pot,s.add].forEach(p=>{if(!p)return;p.lines.forEach(k=>{r[k]=(r[k]||0)+AUG[k].v[p.tier]})});return r}
 function skCd(s,m){let c=MV(s).cd*Math.max(0.4,1-0.06*s.st);if(m&&R.boss&&bossTrait()==='pressure'&&!hasT(m,'moldbreaker'))c*=1.25;return Math.max(1,c)}
 const canEquip=(s,m)=>D(m.id).types.includes(s.t);
@@ -561,19 +569,28 @@ function healBetween(){for(const m of partyMons()){const rt=getRt(m);
 function fullHeal(){partyMons().forEach(m=>{const rt=getRt(m);syncMax(m);rt.down=false;rt.hp=rt.max;rt.moxie=0})}
 function startBoss(){const ch=Math.floor((S.stage-1)/10)%10,idx=(S.stage-1)%10,reg=REG();
   R.boss=true;R.waveDelay=0;R.waveT=0;R.gym=null;
-  if(idx===9){const g=GYMS[ch];const team=g.team==='rival'?rivalTeam():g.team;R.gym=ch;
-    R.enemies=team.map((id,i)=>mkEnemy(id,true,true,{gym:true,ace:i===team.length-1,size:team.length,slot:i}));R.bossMax=45+B.time;
-    toast(`<b>${g.title}</b> ${g.leader}${ch<8?' 관장':''}이(가) 승부를 걸어왔다!`,'gold')}
+  R.legend=null;
+  if(idx===9){const g=GYMS[ch];R.gym=ch;const lg=S.stage<=100?secretBoss(ch):null;
+    if(lg){R.legend=lg;const e=mkEnemy(lg,true,true,{gym:true,ace:true,size:1,slot:0});e.trait='pressure';R.enemies=[e];R.bossMax=50+B.time;
+      toast(`…!? 체육관이 흔들린다! 전설의 포켓몬 <b>${D(lg).name}</b>이(가) 나타났다!`,'gold');log(`전설의 포켓몬 <b>${D(lg).name}</b> 출현`)}
+    else{const team=g.team==='rival'?rivalTeam():g.team;
+      R.enemies=team.map((id,i)=>mkEnemy(id,true,true,{gym:true,ace:i===team.length-1,size:team.length,slot:i}));R.bossMax=45+B.time;
+      toast(`<b>${g.title}</b> ${g.leader}${ch<8?' 관장':''}이(가) 승부를 걸어왔다!`,'gold')}}
   else{const id=(idx===4&&reg.leg)?reg.leg:finalEvo(pick(reg.pool));R.enemies=[mkEnemy(id,true,false,{ace:true})];R.bossMax=30+B.time;
     if(LEGEND.includes(id))toast(`전설의 포켓몬 <b>${D(id).name}</b> 출현!`,'gold')}
   R.bossT=R.bossMax;R.ever++;
   partyMons().forEach(m=>{const rt=getRt(m);rt.cd=[0,0,0,0];rt.gap=0;rt.moxie=0;if(rt.down){rt.down=false;rt.hp=rt.max*0.5}else rt.hp=Math.max(rt.hp,rt.max*0.5)})}
+function secretBoss(ch){S.legend=S.legend||{};const pm=partyMons();const all3=t=>pm.length===3&&pm.every(m=>D(m.id).types.includes(t));
+  if(ch===4&&all3('F')&&!S.legend[146])return 146;if(ch===5&&all3('I')&&!S.legend[144])return 144;if(ch===6&&all3('E')&&!S.legend[145])return 145;
+  if(ch===7&&pm.some(m=>m.id===151)&&!S.legend[150])return 150;return null}
 function nextSpawn(){if(!S.mine&&S.autoBoss&&S.kills>=GOAL)startBoss();else{healBetween();spawnWave()}}
-function bossFail(){R.boss=false;S.kills=0;R.enemies=[];R.waveDelay=0.6;R.ever++;
+function bossFail(){R.boss=false;R.legend=null;S.kills=0;R.enemies=[];R.waveDelay=0.6;R.ever++;
   toast('보스 제한시간 초과! 다시 파밍한 뒤 재도전합니다.','bad');log(`${stageLabel(S.stage)} 보스 시간 초과`)}
-function wipe(){const from=S.stage;R.stageT=0;R.boss=false;S.stage=Math.max(1,S.stage-1);S.kills=0;R.enemies=[];R.waveDelay=1;R.ever++;R.pver++;fullHeal();
+function wipe(){const from=S.stage;R.legend=null;R.stageT=0;R.boss=false;S.stage=Math.max(1,S.stage-1);S.kills=0;R.enemies=[];R.waveDelay=1;R.ever++;R.pver++;fullHeal();
   toast(`전멸했다… ${stageLabel(S.stage)}부터 다시 성장하며 도전합니다.`,'bad');log(`<b>${stageLabel(from)}</b>에서 전멸 → ${stageLabel(S.stage)}로 후퇴`)}
-function bossWin(){const gym=R.gym;const cur=S.stage;const clr=R.stageT||0;S.best=S.best||{};const prevBest=S.best[cur];if(!prevBest||clr<prevBest)S.best[cur]=clr;
+function bossWin(){const gym=R.gym;const cur=S.stage;const lgWon=R.legend;R.legend=null;
+  if(lgWon){S.legend=S.legend||{};S.legend[lgWon]=true;const m=capture(lgWon,clamp(enemyLv(cur),1,LV_MAX),{force:true,quiet:true});
+    if(m){toast(`전설의 포켓몬 <b>${D(lgWon).name}</b>이(가) 동료가 되었다!`,'gold');log(`전설의 포켓몬 <b>${D(lgWon).name}</b> 획득!`);setTimeout(()=>openModal('result',{title:`${D(lgWon).name} 획득!`,body:`${orb(lgWon,72)}<br>전설의 포켓몬 <b>${D(lgWon).name}</b>이(가) 동료가 되었다!`}),400)}}const clr=R.stageT||0;S.best=S.best||{};const prevBest=S.best[cur];if(!prevBest||clr<prevBest)S.best[cur]=clr;
   toast(`${stageLabel(cur)} 클리어 ${fmtTime(clr)}${prevBest?` (최고 ${fmtTime(Math.min(prevBest,clr))})`:' (첫 클리어)'}${S.repeat?' · 반복 중':''}`,clr<(prevBest||1e9)&&prevBest?'gold':'');
   R.stageT=0;R.boss=false;R.gym=null;const before=slotsFor(S.maxStage);const wasMax=S.maxStage;S.maxStage=Math.max(S.maxStage,cur+1);S.kills=0;if(!S.repeat)S.stage=cur+1;fullHeal();
   if(gym!==null&&cur<=100){const g=GYMS[gym];const first=!S.badges[gym];S.badges[gym]=true;
@@ -602,7 +619,7 @@ function hit(e,m,type,pow,cat,mul,o){
   {const r=ROLE_MOD[roleOf(m)];if(r&&r.syn===cat)d*=1.15}
   for(const k of m.traits){const t=TRAITS[k];if(t.boost&&t.boost[type])d*=1+t.boost[type]/100;
     if(t.pinch===type){const rt=getRt(m);d*=rt.hp<=rt.max/3?1.3:1.1}}
-  if(hasT(m,'compoundeyes'))d*=1.08;if(hasT(m,'technician')&&pow<=2.0)d*=1.5;
+  if(hasT(m,'compoundeyes'))d*=1.08;if(hasT(m,'technician')&&pow<=1.0)d*=1.5;
   if(tr==='thickfat'&&(type==='F'||type==='I'))d*=0.5;if(tr==='multiscale'&&e.hp>=e.max)d*=0.5;if(tr==='solidrock'&&ef>1)d*=0.65;
   if(e.boss)d*=1+(B.boss+(o.boss||0))/100;
   if(e.vuln>R.t)d*=1+e.vulnVal;
@@ -707,16 +724,16 @@ function onKill(e){
   S.gold+=2*Math.pow(1.07,st-1)*(e.boss?10:1)*(1+(B.gold+(partyHas('pickup')?15:0))/100)*(mine?0.5:1)*pm;
   const xp=(6+2.2*e.lv)*rank(e.id)*(e.boss?8:1)*(1+B.exp/100)*(mine?0.5:1)*pm;
   partyMons().forEach(m=>gainExp(m,xp));
-  if(e.boss){if(rnd()<pm)dropSkill(e.types,true);if(rnd()<0.5*pm)dropSkill(e.types,true);
+  const SDR=0.8;if(e.boss){if(rnd()<pm*SDR)dropSkill(e.types,true);if(rnd()<0.5*pm*SDR)dropSkill(e.types,true);
     if(rnd()<0.4*pm)S.items.cube++;if(rnd()<0.1*pm)S.items.acube++;if(rnd()<0.35*pm)S.items.capsule++;}
-  else if(rnd()<0.12*pm)dropSkill(e.types,false);
+  else if(rnd()<0.12*pm*SDR)dropSkill(e.types,false);
   const sc=(mine?0.008:(st>=15?0.0006:0))*(1+B.stone/100)*pm;
   if(rnd()<sc){const k=pick(Object.keys(STONES));S.items[k]++;toast(`<b>${STONES[k]}</b>를 주웠다!`,'gold');log(`${STONES[k]} 획득`)}
   const cc=(e.boss?(LEGEND.includes(e.id)?0.005:0.02):0.002)*(1+((partyHas('illuminate')?25:0)+B.cap)/100)*pm;
   if(!e.gym&&rnd()<cc)capture(e.id);
   UI.dirty=true}
 function capture(id,lvOverride,opts){const p=D(id);opts=opts||{};
-  if(S.mons.length>=S.boxMax){toast(`${p.name}를 잡을 뻔했지만 보관함이 가득 찼다! (최대 ${S.boxMax}, 상점에서 확장)`,'bad');log(`보관함 가득: ${p.name} 놓침`);return null}
+  if(!opts.force&&S.mons.length>=S.boxMax){toast(`${p.name}를 잡을 뻔했지만 보관함이 가득 찼다! (최대 ${S.boxMax}, 상점에서 확장)`,'bad');log(`보관함 가득: ${p.name} 놓침`);return null}
   const lv=lvOverride||Math.max(1,Math.min(LV_MAX,Math.floor(S.stage*0.5)));const m=makeMon(id,lv,opts.traits,opts.iv);S.mons.push(m);
   const best=Math.max(...m.traits.map(k=>TRAITS[k].g));
   if(!opts.quiet)toast(`${opts.admin?'':'야생의 '}<b>${p.name}</b>${opts.admin?' 지급':'를 포획했다!'} (Lv.${lv}, 특성 ${m.traits.length}개${best>=2?`, <b style="color:${TG_COL[best]}">${TG_N[best]}</b> 특성 보유`:''})`,'gold');
@@ -729,9 +746,10 @@ function evolve(m,to){const old=D(m.id).name;m.id=to;S.caught[to]=1;
   toast(`축하합니다! <b>${old}</b>가 <b>${D(to).name}</b>로 진화했다!`,'gold');log(`${old} → <b>${D(to).name}</b> 진화`);R.pver++;UI.dirty=true;checkEvo(m)}
 
 /* ================= 강화 ================= */
-const scrollCost=s=>Math.floor(40*Math.pow(1.3,s.sc)*Math.pow(s.g,1.3));
+const gradeCost=g=>g<=5?Math.pow(g,1.3):Math.pow(5,1.3)*Math.pow(2,g-5);
+const scrollCost=s=>Math.floor(40*Math.pow(1.3,s.sc)*gradeCost(s.g));
 const scrollRate=s=>Math.max(30,100-s.sc*5);
-const starCost=s=>Math.floor(120*Math.pow(1.45,s.st)*Math.pow(s.g,1.3));
+const starCost=s=>Math.floor(120*Math.pow(1.45,s.st)*gradeCost(s.g));
 const starRate=s=>Math.max(25,95-s.st*7);
 const cubePrice=()=>Math.floor(400*Math.pow(1.07,S.stage-1));
 const TIER_UP=[0.08,0.03,0.01];
@@ -741,7 +759,7 @@ const offPrice=()=>100000*(1+(S.shop.off||0));
 const relicPrice=()=>10000*(1+(S.shop.relic||0));
 const relicPrice10=()=>{let t=0;for(let i=0;i<10;i++)t+=10000*(1+(S.shop.relic||0)+i);return t};
 const candyPrice=()=>Math.floor(5000*Math.pow(1.15,S.shop.candy||0));
-const eggPrice=()=>50000*(1+(S.shop.egg||0));
+const eggPrice=()=>Math.min(250000,50000+10000*(S.shop.egg||0));
 const stonePrice=()=>200000+100000*(S.shop.stone||0);
 const skillBoxPrice=()=>Math.floor(cubePrice()*0.6);
 const relicCount=()=>Object.keys(RELICS).reduce((a,k)=>a+(S.relics[k]||0),0);
@@ -858,7 +876,7 @@ function renderBattle(now){
     drawMon(ctx,m.id,x,y,size,true,{flash:rt.flash,down:rt.down});
     const top=y-size*0.92-10;bar(ctx,x,top,44,4,rt.hp/rt.max,rt.hp/rt.max<=0.25?'#ff6b6b':rt.hp/rt.max<=0.5?'#f2c94c':'#5fd38d');
     m.skills.forEach((u,j)=>{const s=skBy(u);if(!s)return;bar(ctx,x-16+j*11,top+6,9,2,1-rt.cd[j]/skCd(s,m),TC[s.t])});
-    ctx.font=font(10);label(ctx,`${D(m.id).name} Lv.${m.lv}`,x,top-4);
+    ctx.font=font(10);label(ctx,`${monShort(m)} Lv.${m.lv}`,x,top-4);
     ctx.font=font(9,700);ctx.fillStyle=i===0?'#ff9a6b':'#7fc4ff';ctx.fillText(i===0?'근':'원',x-28,top+5)}
   // 이펙트
   CV.fx=CV.fx.filter(f=>(f.t+=dt)<f.dur);for(const f of CV.fx){const k=f.t/f.dur;ctx.save();
@@ -899,7 +917,7 @@ party(){const n=slotsFor(S.maxStage);let h='';
     if(i>=n){h+=`<div class="card locked"><b>${i+1}번 슬롯</b><span class="sub">스테이지 ${i===1?'2-1':'4-1'}에 도달하면 해금됩니다</span></div>`;continue}
     const m=monBy(S.party[i]);if(!m){h+=`<button class="empty-card" data-act="pickParty" data-slot="${i}">+ ${i+1}번 슬롯에 포켓몬 편성</button>`;continue}
     const p=D(m.id),nd=need(m.lv),rt=getRt(m);
-    h+=`<div class="card"><div class="mon-h">${orb(m.id,56)}<div class="grow"><div class="mon-n">${p.name} <small>Lv.${m.lv}</small></div><div><span class="role" style="--rc:${ROLE_MOD[i===0?'melee':'ranged'].col}">${i+1}번 · ${ROLE_MOD[i===0?'melee':'ranged'].n}</span>${p.types.map(chip).join('')}</div>
+    h+=`<div class="card"><div class="mon-h">${orb(m.id,56)}<div class="grow"><div class="mon-n">${monName(m)} <small>Lv.${m.lv}</small></div><div><span class="role" style="--rc:${ROLE_MOD[i===0?'melee':'ranged'].col}">${i+1}번 · ${ROLE_MOD[i===0?'melee':'ranged'].n}</span>${p.types.map(chip).join('')}</div>
       <div class="bar"><i style="width:${m.lv>=LV_MAX?100:m.exp/nd*100}%"></i></div><div class="sub">HP ${fmt(Math.max(0,rt.hp))}/${fmt(rt.max)}${rt.down?' · 기절':''} · ${evoHint(m)}</div></div></div>
       <div>${traitChips(m,true)}</div>
       <div class="slots">${[0,1,2,3].map(j=>{const s=skBy(m.skills[j]);
@@ -917,12 +935,12 @@ skills(){
     <div class="row"><select id="sellG" data-act="setSellG" aria-label="판매 기준 등급">${[1,2,3,4,5,6,7,8,9].map(g=>`<option value="${g}" ${S.sellG===g?'selected':''}>${g}등급 이하</option>`).join('')}</select><button class="btn sm warn" data-act="sellLow">전부 판매</button><span class="sub grow">착용·잠금·강화한 스킬은 판매되지 않아요.</span></div>
     <div class="filters"><button class="btn sm${UI.filter==='all'?' on':''}" data-act="filter" data-t="all">전체</button>${TK.map(t=>`<button class="btn sm${UI.filter===t?' on':''}" data-act="filter" data-t="${t}">${T[t]}</button>`).join('')}</div>
     ${UI.synth?`<div class="row"><span class="sub grow">같은 등급 스킬 ${SYN_N}개를 고르면 한 등급 위 스킬 1개(타입 랜덤)가 나옵니다. 착용·잠금 스킬은 고를 수 없고, 재료의 강화 수치는 사라져요. 선택 ${UI.sel.length}/${SYN_N}</span><button class="btn sm pri" data-act="synthGo" ${UI.sel.length===SYN_N?'':'disabled'}>합성하기</button></div>`:''}
-    <div class="list">${list.length?list.map(s=>{const eqm=s.eq?monBy(s.eq):null;const tag=eqm?`<span class="eqtag">${D(eqm.id).name}</span>`:s.lock?'<span class="eqtag">잠금</span>':s.isNew?'<span class="eqtag" style="color:var(--bad)">NEW</span>':'';
+    <div class="list">${list.length?list.map(s=>{const eqm=s.eq?monBy(s.eq):null;const tag=eqm?`<span class="eqtag">${esc(monShort(eqm))}</span>`:s.lock?'<span class="eqtag">잠금</span>':s.isNew?'<span class="eqtag" style="color:var(--bad)">NEW</span>':'';
       if(UI.synth){const bad=s.eq||s.lock||s.g>=10||(selG&&s.g!==selG&&!UI.sel.includes(s.uid));return`<button class="row-btn${UI.sel.includes(s.uid)?' sel':''}${bad?' dim':''}" data-act="synthPick" data-uid="${s.uid}" ${bad?'disabled':''}>${skLine(s,tag)}</button>`}
       return`<button class="row-btn" data-act="skill" data-uid="${s.uid}">${skLine(s,tag)}</button>`}).join(''):'<p class="sub">스킬이 없습니다. 몬스터를 처치하면 일정 확률로 스킬이 떨어집니다.</p>'}</div></div>`},
 box(){const caught=Object.keys(S.caught).length;return`<div class="card"><div class="row"><h3 class="grow">보관함 <small>${S.mons.length}/${S.boxMax}</small></h3><span class="sub">도감 ${caught}/151</span></div>
   <p class="sub" style="margin:0">몬스터를 처치하면 아주 낮은 확률로 포획합니다 (일반 0.2%, 보스 2%, 전설 0.5%). 포획 시 개체값과 특성이 무작위로 정해지고, 특성은 1개 89% · 2개 10% · 3개 1%입니다. 노란 테두리가 현재 파티입니다.</p>
-  <div class="grid">${S.mons.map(m=>`<button class="mcell${S.party.includes(m.uid)?' inparty':''}" data-act="mon" data-uid="${m.uid}">${orb(m.id,48)}<b>${D(m.id).name}</b><span class="lv">Lv.${m.lv} · 개체 ${(g=>`<b style="color:${IVG_COL[g]}">${g}</b>`)(ivGrade(Math.round(m.iv.reduce((a,x)=>a+x,0)/6)))} · 특성 ${m.traits.length}</span></button>`).join('')}</div>
+  <div class="grid">${S.mons.map(m=>`<button class="mcell${S.party.includes(m.uid)?' inparty':''}" data-act="mon" data-uid="${m.uid}">${orb(m.id,48)}<b>${monName(m)}</b><span class="lv">Lv.${m.lv} · 개체 ${(g=>`<b style="color:${IVG_COL[g]}">${g}</b>`)(ivGrade(Math.round(m.iv.reduce((a,x)=>a+x,0)/6)))} · 특성 ${m.traits.length}</span></button>`).join('')}</div>
   <div class="sec"><b>진화의 돌</b><div class="row">${Object.entries(STONES).map(([k,n])=>`<span class="sub" style="display:inline-flex;align-items:center;gap:3px">${itemIcon(k,22)}${n} ${S.items[k]}</span>`).join('')}</div>
   <p class="sub" style="margin:0">스테이지 2-5부터 아주 드물게(0.06%) 떨어지고, 광산 파밍 중엔 0.8%로 오릅니다 (대신 골드·경험치 절반).</p></div></div>`},
 relic(){const w=relicWeights();const tot=w.reduce((a,x)=>a+x,0)||1;
@@ -943,7 +961,7 @@ shop(){const row=(name,desc,price,act,extra,dis,ic)=>`<div class="shop-row">${ic
   ${row('오프라인 보상 시간 +1시간',`현재 최대 ${offMaxH()}시간 / 24시간 · 살 때마다 10만씩 비싸짐`,offMaxH()>=24?Infinity:offPrice(),'buyOff','',offMaxH()>=24)}
   ${row('유물 상자','무작위 유물 1레벨 · 살 때마다 1만씩 비싸짐',relicPrice(),'relicDraw','',relicsAllMax(),'relic')}
   ${row('이상한사탕','포켓몬 1마리 레벨 +1 (능력치·특성 화면에서 사용) · 살 때마다 비싸짐',candyPrice(),'buyItem','data-k="candy"',false,'candy')}
-  ${row('포켓몬 알','전설을 뺀 1세대 기본형 포켓몬 1마리가 Lv.5로 부화 · 개체값·특성 무작위',eggPrice(),'buyEgg','',S.mons.length>=S.boxMax)}
+  ${row('포켓몬 알','전설을 뺀 1세대 기본형 포켓몬 1마리가 Lv.5로 부화 · 개체값·특성 무작위 · 5만부터 1만씩, 최대 25만',eggPrice(),'buyEgg','',S.mons.length>=S.boxMax)}
   ${row('스킬 상자','현재 스테이지 보스 드랍 기준으로 무작위 스킬 1개',skillBoxPrice(),'buySkillBox','',S.bag.length>=S.bagMax)}
   <div class="sec-h"><b>강화 재료</b></div>
   ${row('각성의 구슬','스킬 각성 개방·재설정',cubePrice(),'buyItem','data-k="cube"',false,'cube')}
@@ -963,10 +981,10 @@ friend(){const code=myCode();
   <div class="card"><h3>친구 추가 · 갱신</h3><textarea id="addCode" class="code" rows="3" placeholder="친구에게 받은 코드를 붙여넣으세요"></textarea>
   <div class="row"><button class="btn pri" data-act="addFriend">추가</button><span class="sub grow">이미 있는 친구의 새 코드를 넣으면 팀 정보가 갱신됩니다.</span></div></div>
   <div class="card"><div class="row"><h3 class="grow">친구 목록</h3><span class="sub">${S.friends.length}명 · 전적 ${S.pvp.w}승 ${S.pvp.l}패</span></div>
-  ${S.friends.length?S.friends.map((f,i)=>`<div class="shop-row"><span class="grow"><b>${esc(f.name)}</b> <small>뱃지 ${f.badges} · 최고 ${stageLabel(f.max)}</small><br><span class="sub">${f.team.map(u=>`${D(u.i).name} Lv.${u.l}`).join(' · ')}<br>전적 ${f.w||0}승 ${f.l||0}패</span></span>
+  ${S.friends.length?S.friends.map((f,i)=>`<div class="shop-row"><span class="grow"><b>${esc(f.name)}</b> <small>뱃지 ${f.badges} · 최고 ${stageLabel(f.max)}</small><br><span class="sub">${f.team.map(u=>`${u.k?esc(u.k):D(u.i).name} Lv.${u.l}`).join(' · ')}<br>전적 ${f.w||0}승 ${f.l||0}패</span></span>
     <div style="display:flex;flex-direction:column;gap:4px"><button class="btn sm pri" data-act="pvp" data-i="${i}">3대3 배틀</button><button class="btn sm" disabled>보스레이드 (준비 중)</button><button class="btn sm warn" data-act="delFriendAsk" data-i="${i}">삭제</button></div></div>`).join(''):'<p class="sub" style="margin:0">아직 친구가 없어요. 친구에게 코드를 받아 추가해 보세요.</p>'}</div>`},
 trainer(){const nb=S.badges.filter(Boolean).length;
-  return`<div class="card"><div class="row"><h3 class="grow">${esc(S.name)} <small>트레이너</small></h3><button class="btn sm" data-act="renameAsk">이름 변경</button></div>
+  return`<div class="card"><div class="row"><h3 class="grow">${esc(S.name)} <small>트레이너</small></h3><button class="btn sm" data-act="patchNotes">패치노트</button><button class="btn sm" data-act="renameAsk">이름 변경</button></div>
   <dl class="kv"><dt>최고 스테이지</dt><dd>${stageLabel(S.maxStage)}</dd><dt>도감</dt><dd>잡음 ${Object.keys(S.caught).length} · 봄 ${Object.keys(S.seen).length} / 151</dd><dt>친구 배틀</dt><dd>${S.pvp.w}승 ${S.pvp.l}패</dd><dt>뱃지</dt><dd>${nb}/10</dd></dl>
   <div class="sec"><b>뱃지 케이스</b><div class="badges">${GYMS.map((g,i)=>`<div class="badge ${S.badges[i]?'on':'off'}"><i style="--bc:${g.col}">${S.badges[i]?i+1:'?'}</i>${g.badge}</div>`).join('')}</div>
   <p class="sub" style="margin:0">각 지역 마지막 스테이지(1-10, 2-10 …)에서 체육관 관장과 싸워 이기면 뱃지를 얻습니다. 9-10은 사천왕, 10-10은 챔피언입니다.</p></div></div>
@@ -1004,11 +1022,11 @@ pickSkill(mu,j){const m=monBy(mu);if(!m)return null;const p=D(m.id);const list=S
   <div class="list">${list.length?list.map(s=>{const o=s.eq?monBy(s.eq):null;return`<button class="row-btn" data-act="equip" data-uid="${s.uid}" data-m="${mu}" data-j="${j}">${skLine(s,o?`<span class="eqtag">${D(o.id).name}에서 이동</span>`:'',m)}</button>`}).join('')
    :`<p class="sub">착용 가능한 스킬이 없어요. 같은 타입의 몬스터를 잡으면 해당 타입 스킬이 잘 떨어집니다.</p>`}</div>`},
 pickParty(slot){const list=S.mons.filter(m=>!S.party.includes(m.uid));
-  return head(`${slot+1}번 슬롯 편성`)+`<div class="grid">${list.length?list.map(m=>`<button class="mcell" data-act="pset" data-slot="${slot}" data-uid="${m.uid}">${orb(m.id,48)}<b>${D(m.id).name}</b><span class="lv">Lv.${m.lv} · ${m.traits.map(k=>TRAITS[k].n).join('·')}</span></button>`).join(''):'<p class="sub">편성할 수 있는 포켓몬이 없어요. 몬스터를 잡아 보관함을 채워보세요.</p>'}</div>`},
+  return head(`${slot+1}번 슬롯 편성`)+`<div class="grid">${list.length?list.map(m=>`<button class="mcell" data-act="pset" data-slot="${slot}" data-uid="${m.uid}">${orb(m.id,48)}<b>${monName(m)}</b><span class="lv">Lv.${m.lv} · ${m.traits.map(k=>TRAITS[k].n).join('·')}</span></button>`).join(''):'<p class="sub">편성할 수 있는 포켓몬이 없어요. 몬스터를 잡아 보관함을 채워보세요.</p>'}</div>`},
 mon(uid){const m=monBy(uid);if(!m)return null;const p=D(m.id),inP=S.party.includes(uid);const stones=p.evo.filter(e=>e.stone);const st=monStats(m);
   const maxBase=Math.max(...p.base);const ivSum=m.iv.reduce((a,x)=>a+x,0);const avgG=ivGrade(Math.round(ivSum/6));
   const locks=UI.tlocks.slice(0,m.traits.length);const cost=1+locks.filter(Boolean).length;const canRe=S.items.capsule>=cost&&locks.some(x=>!x);
-  return head(`${p.name} <small>Lv.${m.lv}</small>`,orb(m.id,60))+`<div>${p.types.map(chip).join('')}<span class="sub"> 종족값 합계 ${p.bst} · ${evoHint(m)}</span></div>
+  return head(`${monName(m)} <small>Lv.${m.lv}</small>`,orb(m.id,60))+`<div class="row"><button class="btn sm" data-act="nickAsk" data-uid="${uid}">이름 변경</button></div><div>${p.types.map(chip).join('')}<span class="sub"> 종족값 합계 ${p.bst} · ${evoHint(m)}</span></div>
   <div class="sec"><div class="sec-h"><b>개체값</b><span class="sub">합계 ${ivSum}/600 · 평균 등급 <b style="color:${IVG_COL[avgG]}">${avgG}</b></span></div>${ivHex(m)}</div>
   <div style="overflow-x:auto"><table class="stats"><thead><tr><th>능력치</th><th>종족값</th><th>개체값</th><th>실수치</th></tr></thead><tbody>
   ${STAT_K.map((k,i)=>{const g=ivGrade(m.iv[i]);return`<tr><td>${STAT_N[k]}</td><td><span class="sbar" style="width:${Math.round(p.base[i]/Math.max(150,maxBase)*60)}px;--sc:${TC[p.types[0]]}"></span>${p.base[i]}</td><td>${m.iv[i]} <span class="ivg${g==='SS'?' ss':''}" style="--ivc:${IVG_COL[g]}">${g}</span></td><td><b>${i===0?fmt(st.hp*HP_MUL):st[k]}</b></td></tr>`}).join('')}
@@ -1034,15 +1052,15 @@ sellMon(uid){const m=monBy(uid);if(!m)return null;return head('포켓몬 판매'
 reset(){return head('진행 초기화')+`<p>모든 포켓몬, 스킬, 재화가 사라지고 스타팅 선택부터 다시 시작합니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="resetGo">초기화</button><button class="btn" data-act="close">취소</button></div>`},
 offline(r){return head('다녀오셨군요!')+`<p class="sub" style="margin:0">자리를 비운 ${r.time} 동안 포켓몬들이 계속 싸웠어요. (최대 ${offMaxH()}시간 · 온라인 효율의 ${Math.round(r.eff*100)}%)</p>
   <dl class="kv"><dt>골드</dt><dd>+${fmt(r.gold)}</dd><dt>경험치</dt><dd>파티 각 +${fmt(r.xp)}</dd><dt>스킬북</dt><dd>${r.skills}개</dd><dt>특성결정</dt><dd>${r.caps}개</dd><dt>포획</dt><dd>${r.mons.length?r.mons.join(', '):'없음'}</dd></dl><button class="btn pri" data-act="close">받기</button>`},
-dexInfo(id){const p=D(id);const caught=!!S.caught[id];const where=REGIONS.map((r,i)=>r.pool.includes(id)||r.leg===id||(GYMS[i].team!=='rival'&&GYMS[i].team.includes(id))?r.name:null).filter(Boolean);
+dexInfo(id){const p=D(id);const caught=!!S.caught[id];const where=REGIONS.map((r,i)=>r.pool.includes(id)||(GYMS[i].team!=='rival'&&GYMS[i].team.includes(id))?r.name:null).filter(Boolean);
   let first=p;while(first.prev)first=D(first.prev);const chain=[];const walk=q=>{chain.push(q);q.evo.forEach(e=>walk(D(e.to)))};walk(first);
   return head(`No.${String(id).padStart(3,'0')} ${caught||S.seen[id]?p.name:'???'}`,orb(id,56))+`<div>${p.types.map(chip).join('')}<span class="sub"> ${caught?'잡은 적 있음':'만난 적만 있음'}</span></div>
   <div style="overflow-x:auto"><table class="stats"><thead><tr><th>종족값</th><th></th></tr></thead><tbody>${STAT_K.map((k,i)=>`<tr><td>${STAT_N[k]}</td><td><span class="sbar" style="width:${Math.round(p.base[i]/160*110)}px;--sc:${TC[p.types[0]]}"></span>${p.base[i]}</td></tr>`).join('')}<tr><td>합계</td><td>${p.bst}</td></tr></tbody></table></div>
-  <dl class="kv"><dt>진화</dt><dd>${chain.length>1?chain.map(q=>S.caught[q.id]||S.seen[q.id]?q.name:'???').join(' → '):'진화하지 않음'}</dd><dt>출현</dt><dd>${where.length?where.join(', '):'상점의 포켓몬 알 등'}</dd></dl>`},
+  <dl class="kv"><dt>진화</dt><dd>${chain.length>1?chain.map(q=>S.caught[q.id]||S.seen[q.id]?q.name:'???').join(' → '):'진화하지 않음'}</dd><dt>출현</dt><dd>${LEGEND.includes(id)?'???':where.length?where.join(', '):'상점의 포켓몬 알 등'}</dd></dl>`},
 pvp(i){const f=S.friends[i];if(!f)return null;
-  return head(`${esc(S.name)} vs ${esc(f.name)}`)+`<div class="pvp-team" id="pvpB">${f.team.map((u,j)=>`<div class="pvp-u" id="pvB${j}">${orb(u.i,44)}<span>${D(u.i).name} Lv.${u.l}</span><div class="hp"><i></i></div></div>`).join('')}</div>
+  return head(`${esc(S.name)} vs ${esc(f.name)}`)+`<div class="pvp-team" id="pvpB">${f.team.map((u,j)=>`<div class="pvp-u" id="pvB${j}">${orb(u.i,44)}<span>${u.k?esc(u.k):D(u.i).name} Lv.${u.l}</span><div class="hp"><i></i></div></div>`).join('')}</div>
   <div class="pvp-vs" id="pvpRes">VS</div>
-  <div class="pvp-team" id="pvpA">${myTeam().map((u,j)=>`<div class="pvp-u" id="pvA${j}">${orb(u.i,44,true)}<span>${D(u.i).name} Lv.${u.l}</span><div class="hp"><i></i></div></div>`).join('')}</div>
+  <div class="pvp-team" id="pvpA">${myTeam().map((u,j)=>`<div class="pvp-u" id="pvA${j}">${orb(u.i,44,true)}<span>${u.k?esc(u.k):D(u.i).name} Lv.${u.l}</span><div class="hp"><i></i></div></div>`).join('')}</div>
   <div class="pvp-log" id="pvpLog"></div><div class="row"><button class="btn" data-act="pvpSkip" id="pvpSkipBtn">결과 바로 보기</button><button class="btn" data-act="close">닫기</button></div>`},
 stageSel(){const max=S.maxStage;const chs=Math.ceil(max/10);let o=head('스테이지 선택')+`<p class="sub" style="margin:0">가본 스테이지 중 원하는 곳을 고르세요. 최고 기록보다 낮은 스테이지는 1단계마다 골드·경험치·드랍률이 5%씩 줄어듭니다 (최대 50%). 반복을 켜면 보스를 잡아도 다음 스테이지로 넘어가지 않아요.</p>
   <div class="row"><button class="btn sm${S.repeat?' on':''}" data-act="toggleRepeat">현재 스테이지 반복 ${S.repeat?'ON':'OFF'}</button><span class="sub">최고 ${stageLabel(Math.max(1,max-1))} 클리어</span></div>`;
@@ -1052,9 +1070,12 @@ stageSel(){const max=S.maxStage;const chs=Math.ceil(max/10);let o=head('스테�
   return o},
 equipTo(uid){const s=skBy(uid);if(!s)return null;const list=S.mons.filter(m=>canEquip(s,m)).sort((a,b)=>(S.party.includes(b.uid)?1:0)-(S.party.includes(a.uid)?1:0)||b.lv-a.lv);
   return head(`${MV(s).name} 장착`)+`<p class="sub" style="margin:0">${T[s.t]} 타입 포켓몬에게만 장착할 수 있어요. 넣을 칸을 누르세요. 칸에 있던 스킬은 가방으로 돌아갑니다.</p>`+
-  (list.length?list.map(m=>`<div class="shop-row" style="flex-direction:column;align-items:stretch"><div class="row">${orb(m.id,36)}<b class="grow">${D(m.id).name} <small>Lv.${m.lv}${S.party.includes(m.uid)?` · ${roleOf(m)?ROLE_MOD[roleOf(m)].n:'파티'}`:''}</small></b></div>
+  (list.length?list.map(m=>`<div class="shop-row" style="flex-direction:column;align-items:stretch"><div class="row">${orb(m.id,36)}<b class="grow">${monName(m)} <small>Lv.${m.lv}${S.party.includes(m.uid)?` · ${roleOf(m)?ROLE_MOD[roleOf(m)].n:'파티'}`:''}</small></b></div>
     <div class="slots">${[0,1,2,3].map(j=>{const c=skBy(m.skills[j]);return`<button class="slot-main${c?'':' empty'}" data-act="equip" data-uid="${s.uid}" data-m="${m.uid}" data-j="${j}" ${c&&c.uid===s.uid?'disabled':''}>${j+1}번 · ${c?(c.uid===s.uid?'지금 장착 중':`${MV(c).name} (${c.g}등급)와 교체`):'빈 칸에 장착'}</button>`}).join('')}</div></div>`).join('')
    :`<p class="sub">${T[s.t]} 타입 포켓몬이 없어요.</p>`)},
+patch(){return head('패치노트')+`<div class="pn">${PATCH_NOTES.map(n=>`<h4>v${n.v} <span class="d">${n.d}</span></h4><ul>${n.items.map(x=>`<li>${x}</li>`).join('')}</ul>`).join('')}</div><button class="btn pri" data-act="close">확인</button>`},
+nick(uid){const m=monBy(uid);if(!m)return null;return head(`${D(m.id).name} 이름 변경`,orb(m.id,44))+`<p class="sub" style="margin:0">최대 10자. 비워두고 저장하면 원래 이름으로 돌아갑니다. 화면에는 "별명(${D(m.id).name})"으로 표시돼요.</p>
+  <input id="nickIn" class="name-in" maxlength="10" value="${m.nick?esc(m.nick):''}" placeholder="${D(m.id).name}" aria-label="새 이름"><div class="row"><button class="btn pri" data-act="nickGo" data-uid="${uid}">저장</button><button class="btn" data-act="mon" data-uid="${uid}">취소</button></div>`},
 rename(){return head('트레이너 이름 변경')+`<input id="newName" class="name-in" maxlength="10" value="${esc(S.name)}" aria-label="새 이름"><div class="row"><button class="btn pri" data-act="renameGo">저장</button><button class="btn" data-act="close">취소</button></div>`},
 delFriend(i){const f=S.friends[i];if(!f)return null;return head('친구 삭제')+`<p>${esc(f.name)}님을 친구 목록에서 삭제할까요?</p><div class="row"><button class="btn warn" data-act="delFriendGo" data-i="${i}">삭제</button><button class="btn" data-act="close">취소</button></div>`},
 result(r){return head(r.title)+`<p>${r.body}</p><button class="btn pri" data-act="close">확인</button>`},
@@ -1087,7 +1108,7 @@ const monSellPrice=m=>Math.floor(50*rank(m.id)*m.lv*(1+S.stage*0.05)*(1+(m.trait
 function fillAdmMoves(){const t=$('#admSkT'),mm=$('#admSkM');if(!t||!mm)return;const cur=mm.value;mm.innerHTML=MOVES[t.value].map((a,i)=>`<option value="${i}">${a[0]}</option>`).join('');if(cur&&+cur<MOVES[t.value].length)mm.value=cur}
 
 /* ================= 친구 코드 ================= */
-function myTeam(){return partyMons().slice(0,3).map(m=>({i:m.id,l:m.lv,v:m.iv.slice(),t:m.traits.slice(),s:m.skills.map(skBy).filter(Boolean).map(s=>[s.t,s.m,s.g,s.sc,s.st,s.pot?[s.pot.tier,s.pot.lines]:0,s.add?[s.add.tier,s.add.lines]:0])}))}
+function myTeam(){return partyMons().slice(0,3).map(m=>({i:m.id,k:m.nick||undefined,l:m.lv,v:m.iv.slice(),t:m.traits.slice(),s:m.skills.map(skBy).filter(Boolean).map(s=>[s.t,s.m,s.g,s.sc,s.st,s.pot?[s.pot.tier,s.pot.lines]:0,s.add?[s.add.tier,s.add.lines]:0])}))}
 function myCode(){const o={v:1,id:S.pid,n:S.name,b:S.badges.filter(Boolean).length,x:S.maxStage,p:myTeam()};return'PKS1.'+btoa(unescape(encodeURIComponent(JSON.stringify(o))))}
 function parseCode(c){c=(c||'').replace(/\s/g,'');if(!c.startsWith('PKS1.'))throw new Error('코드 형식이 아니에요');
   const o=JSON.parse(decodeURIComponent(escape(atob(c.slice(5)))));const int=(v,a,b)=>Number.isInteger(v)&&v>=a&&v<=b;
@@ -1096,7 +1117,7 @@ function parseCode(c){c=(c||'').replace(/\s/g,'');if(!c.startsWith('PKS1.'))thro
     const t=(Array.isArray(u.t)?u.t:[]).filter(k=>TRAITS[k]).slice(0,3);if(!t.length)t.push('keeneye');
     const okPot=x=>x===0||(Array.isArray(x)&&int(x[0],0,3)&&Array.isArray(x[1])&&x[1].length<=2&&x[1].every(k=>AUG[k]));
     const s=(Array.isArray(u.s)?u.s:[]).slice(0,4).filter(a=>Array.isArray(a)&&MOVES[a[0]]&&int(a[1],0,MOVES[a[0]].length-1)&&int(a[2],1,10)&&int(a[3],0,15)&&int(a[4],0,10)&&okPot(a[5])&&okPot(a[6])&&D(u.i).types.includes(a[0]));
-    return{i:u.i,l:u.l,v:u.v,t,s}});
+    return{i:u.i,k:typeof u.k==='string'?u.k.slice(0,10):undefined,l:u.l,v:u.v,t,s}});
   return{id:o.id,name:o.n.slice(0,10)||'트레이너',badges:int(o.b,0,10)?o.b:0,max:int(o.x,1,9999)?o.x:1,team}}
 
 /* ================= 3대3 배틀 엔진 ================= */
@@ -1120,12 +1141,12 @@ function pvpRun(teamA,teamB){
     if(a.types.includes(type)||has(a,'protean'))x*=has(a,'adaptability')?2:1.5;
     x*=ef;if(ef<1&&has(a,'tintedlens'))x*=2;if((a.role==='melee'&&cat==='p')||(a.role==='ranged'&&cat==='s'))x*=1.15;
     for(const k of a.traits){const tr=TRAITS[k];if(tr.boost&&tr.boost[type])x*=1+tr.boost[type]/100;if(tr.pinch===type)x*=a.hp<=a.max/3?1.3:1.1}
-    if(has(a,'compoundeyes'))x*=1.08;if(has(a,'technician')&&pow<=2)x*=1.5;
+    if(has(a,'compoundeyes'))x*=1.08;if(has(a,'technician')&&pow<=1)x*=1.5;
     if(!mb){if(has(d,'thickfat')&&(type==='F'||type==='I'))x*=0.5;if(has(d,'multiscale')&&d.hp>=d.max)x*=0.5;if(has(d,'solidrock')&&ef>1)x*=0.65;if(has(d,'wonderguard')&&ef<=1)x*=0.4;if(has(d,'magicguard'))x*=0.9}
     if(t<SD[d.side].vuln)x*=1+SD[d.side].vv;if(o.exec&&d.hp<d.max*0.3)x*=1+o.exec/100;
     const cr=Math.random()<(5+(has(a,'keeneye')?5:0)+(has(a,'superluck')?12:0)+(o.crit||0))/100;if(cr)x*=has(a,'sniper')?3:2;
     if(!mb&&has(d,'sturdy')&&d.hp>=d.max&&x>=d.hp){x=d.hp-1;L(`${d.name}은(는) 옹골참으로 버텼다!`)}
-    d.hp-=x;if(ef>1&&pow>0.8)L(`효과가 굉장했다! (${d.name})`);
+    d.hp-=x;if(ef>1&&pow>0.85)L(`효과가 굉장했다! (${d.name})`);
     if(o.dot&&!has(a,'sheerforce'))d.dots.push({until:t+5,dps:x*o.dot/100*(has(a,'serenegrace')?2:1)});
     const sg=has(d,'serenegrace')?2:1;
     if(has(d,'roughskin'))a.hp-=x*0.15;
@@ -1301,6 +1322,12 @@ delFriendGo(d){S.friends.splice(+d.i,1);closeModal()},
 pvp(d){if(!myTeam().length)return;playPvp(+d.i)},
 pvpSkip(){if(UI.pvpFinish)UI.pvpFinish()},
 renameAsk(){openModal('rename')},
+patchNotes(){openModal('patch')},
+nickAsk(d){openModal('nick',+d.uid)},
+nickGo(d){const m=monBy(+d.uid);if(!m)return;const v=(($('#nickIn')||{}).value||'').trim().slice(0,10);
+  if(m.id===132&&v==='뮤'&&!(S.legend&&S.legend.mew)){S.legend=S.legend||{};S.legend.mew=true;m.id=151;m.nick=null;S.caught[151]=1;S.seen[151]=1;if(R.rt[m.uid])syncMax(m);R.pver++;
+    log('메타몽이 <b>뮤</b>로 변했다…!');openModal('result',{title:'…!?',body:`${orb(151,72)}<br>메타몽의 모습이 흔들리더니… <b>뮤</b>가 되었다!`});return}
+  m.nick=v&&v!==D(m.id).name?v:null;R.pver++;toast(m.nick?`이름을 ${esc(m.nick)}(으)로 바꿨어요`:'원래 이름으로 돌아갔어요');openModal('mon',m.uid)},
 renameGo(){const v=($('#newName').value||'').trim().slice(0,10);if(!v){toast('이름을 입력해 주세요','bad');return}S.name=v;closeModal();toast(`이름을 ${esc(v)}(으)로 바꿨어요`)},
 tabGo(d){closeModal();ACT.tab(d)},
 stoneEvo(d){const m=monBy(+d.uid),k=d.k;if(!m||!S.items[k])return;if(!D(m.id).evo.some(e=>e.stone===k&&e.to===+d.to))return;S.items[k]--;evolve(m,+d.to);renderModal()},
@@ -1308,8 +1335,8 @@ sellMonAsk(d){openModal('sellMon',+d.uid)},
 sellMonGo(d){const m=monBy(+d.uid);if(!m||S.party.includes(m.uid))return;m.skills.forEach(u=>{const s=skBy(u);if(s)s.eq=null});S.gold+=monSellPrice(m);S.mons=S.mons.filter(x=>x!==m);delete R.rt[m.uid];toast(`${D(m.id).name}를 판매했어요.`);closeModal()},
 resetAsk(){openModal('reset')},
 resetGo(){try{localStorage.removeItem(KEY)}catch(e){}S=null;UI.god=false;closeModal();showStarter()},
-starter(d){const nm=(($('#pname')||{}).value||'').trim().slice(0,10);if(!nm){toast('트레이너 이름을 입력해 주세요','bad');const i=$('#pname');if(i)i.focus();return}
-  const st=STARTERS[+d.i];S=newState();S.name=nm;S.starter=st[0];refreshBonus();
+starter(d){if(S)S.seenPatch=GAME_VERSION;const nm=(($('#pname')||{}).value||'').trim().slice(0,10);if(!nm){toast('트레이너 이름을 입력해 주세요','bad');const i=$('#pname');if(i)i.focus();return}
+  const st=STARTERS[+d.i];S=newState();S.name=nm;S.seenPatch=GAME_VERSION;S.starter=st[0];refreshBonus();
   const m=makeMon(st[0],1,[st[3]]);S.mons.push(m);S.party=[m.uid];
   const s=makeSkill(st[1],1,MOVES[st[1]].findIndex(x=>x[0]===st[2]));s.isNew=false;S.bag.push(s);m.skills[0]=s.uid;s.eq=m.uid;
   S.gold=30000;setTimeout(()=>openModal('result',{title:'모험을 시작합니다!',body:`${itemIcon('gold',28)} 스타팅 축하금 <b>30,000골드</b>를 받았어요. 상점에서 유용한 아이템을 사 보세요.`}),300);
@@ -1318,7 +1345,7 @@ starter(d){const nm=(($('#pname')||{}).value||'').trim().slice(0,10);if(!nm){toa
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||b.tagName==='INPUT')return;const k=b.dataset.act;
   if(ADM[k]){if(admOk())ADM[k](b.dataset,b);return}const f=ACT[k];if(f)f(b.dataset,b)});
 document.addEventListener('change',e=>{if(e.target.id==='admSkT'){fillAdmMoves();return}const b=e.target.closest('input[data-act],select[data-act]');if(b&&ACT[b.dataset.act])ACT[b.dataset.act](b.dataset,b)});
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='admPw')ACT.adminLogin();if(e.key==='Enter'&&e.target.id==='newName')ACT.renameGo();if(e.key==='Escape'&&UI.modal)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='admPw')ACT.adminLogin();if(e.key==='Enter'&&e.target.id==='nickIn'){const b=document.querySelector('[data-act="nickGo"]');if(b)ACT.nickGo(b.dataset)}if(e.key==='Enter'&&e.target.id==='newName')ACT.renameGo();if(e.key==='Escape'&&UI.modal)closeModal()});
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 
 /* ================= 시작/루프 ================= */
@@ -1329,7 +1356,7 @@ function offlineReward(sec){if(!S||!S.party.length)return;sec=Math.min(sec,offMa
   const opm=1-farmPen(S.stage)/100;const gold=kills*2*Math.pow(1.07,S.stage-1)*(1+B.gold/100)*eff*opm;const xp=kills*(6+2.2*lv)*(1+B.exp/100)*eff*opm;
   S.gold+=gold;partyMons().forEach(m=>gainExp(m,xp));
   const roll=x=>Math.floor(x)+(rnd()<x%1?1:0);
-  let n=0;const cnt=Math.min(300,roll(kills*0.12*eff));for(let i=0;i<cnt;i++){if(dropSkill(D(pick(reg.pool)).types,false,true))n++}
+  let n=0;const cnt=Math.min(300,roll(kills*0.096*eff));for(let i=0;i<cnt;i++){if(dropSkill(D(pick(reg.pool)).types,false,true))n++}
   const caps=roll(kills/GOAL*0.35*eff);S.items.capsule+=caps;
   const mons=[];const mc=Math.min(10,roll(kills*0.002*eff*(1+B.cap/100)));for(let i=0;i<mc;i++){const m=capture(pick(reg.pool),undefined,{quiet:true});if(m)mons.push(D(m.id).name)}
   const h=Math.floor(sec/3600),mi=Math.floor(sec%3600/60);openModal('offline',{time:`${h?h+'시간 ':''}${mi}분`,gold,xp,skills:n,caps,mons,eff})}
@@ -1339,7 +1366,7 @@ function boot(){
   $('#ver').textContent=`v${GAME_VERSION}`;cvInit();preloadSprites();
   const saved=load();
   if(saved&&saved.party&&saved.party.length){S=saved;S.ver=GAME_VERSION;S.items=Object.assign(newState().items,S.items);const base=newState();for(const k of['seen','friends','pvp','badges','name','pid','starter','autoSynth','sellG','kps'])if(S[k]===undefined)S[k]=base[k];if(S.starter===4&&S.mons[0])S.starter=[1,4,7].includes(S.mons[0].id)?S.mons[0].id:4;
-    S.caught=S.caught||{};S.shop=S.shop||{};S.bagMax=S.bagMax||BAG_BASE;S.boxMax=S.boxMax||BOX_BASE;delete S.items.chest;for(const k in S.relics)if(!RELICS[k])delete S.relics[k];refreshBonus();resetBattle();renderPanel();offlineReward((Date.now()-(S.last||Date.now()))/1000)}
+    S.caught=S.caught||{};S.shop=S.shop||{};S.bagMax=S.bagMax||BAG_BASE;S.boxMax=S.boxMax||BOX_BASE;delete S.items.chest;for(const k in S.relics)if(!RELICS[k])delete S.relics[k];refreshBonus();resetBattle();renderPanel();offlineReward((Date.now()-(S.last||Date.now()))/1000);if(S.seenPatch!==GAME_VERSION){S.seenPatch=GAME_VERSION;if(!UI.modal)openModal('patch')}}
   else showStarter();
   let last=performance.now();
   function frame(now){let dt=Math.min(1,(now-last)/1000);const dt0=dt;last=now;if(S){dt*=S.speed;while(dt>0){const h=Math.min(0.05,dt);step(h);dt-=h}renderBattle(now);if(UI.dirty&&!UI.modal&&now-(UI.lastPanel||0)>1000&&!['dex','friend','trainer'].includes(UI.tab)&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))){UI.lastPanel=now;renderPanel()}
