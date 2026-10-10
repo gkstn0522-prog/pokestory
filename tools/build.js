@@ -19,6 +19,11 @@ const html = `<!doctype html>
 <meta name="theme-color" content="#12151d">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="포켓몬스토리">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -37,7 +42,7 @@ fs.writeFileSync(path.join(dist, 'version.json'), JSON.stringify({ build: buildI
 
 const sw = fs.readFileSync(path.join(root, 'web', 'sw.js'), 'utf8').replace('__BUILD_ID__', buildId);
 fs.writeFileSync(path.join(dist, 'sw.js'), sw);
-for (const f of ['manifest.json', 'icon.svg']) {
+for (const f of ['manifest.json', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png']) {
   fs.copyFileSync(path.join(root, 'web', f), path.join(dist, f));
 }
 fs.writeFileSync(path.join(dist, '.nojekyll'), '');
