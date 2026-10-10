@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+// 게임 주소는 GitHub에서 빌드할 때 자동으로 채워집니다 (-PgameUrl=...).
+def gameUrl = project.findProperty('gameUrl') ?: 'https://example.github.io/pokestory/'
+def buildNo = (project.findProperty('versionCode') ?: '1') as int
+
+android {
+    namespace 'com.pokestory.idle'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.pokestory.idle'
+        minSdk 26
+        targetSdk 34
+        versionCode buildNo
+        versionName "1.0.${buildNo}"
+        buildConfigField 'String', 'GAME_URL', "\"${gameUrl}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    // 친구 배포용 고정 서명키. 같은 키로 서명해야 덮어쓰기 설치(업데이트)가 됩니다.
+    signingConfigs {
+        release {
+            storeFile file('../keystore/pokestory.jks')
+            storePassword 'pokestory'
+            keyAlias 'pokestory'
+            keyPassword 'pokestory'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

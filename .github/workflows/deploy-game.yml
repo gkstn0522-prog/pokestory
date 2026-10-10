@@ -1,0 +1,36 @@
+# src/ 나 web/ 을 수정해서 올리면 1~2분 뒤 게임이 자동으로 업데이트됩니다.
+name: 게임 배포 (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'web/**', 'tools/**', '.github/workflows/deploy-game.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/build.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,10 @@
+{
+  "name": "포켓몬스토리 키우기",
+  "short_name": "포켓몬스토리",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12151d",
+  "theme_color": "#12151d",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

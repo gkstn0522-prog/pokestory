@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- 노란/파란 반반 구슬 (게임 안 포켓몬 표시와 같은 모양) -->
+    <path android:fillColor="#f2b84b"
+        android:pathData="M54,24 A30,30 0 1,1 53.99,24 Z" />
+    <path android:fillColor="#6f9bf2"
+        android:pathData="M75.21,32.79 A30,30 0 0,1 32.79,75.21 Z" />
+    <path android:fillColor="#8CFFFFFF"
+        android:pathData="M45,35 A8,8 0 1,1 44.99,35 Z" />
+</vector>
