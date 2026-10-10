@@ -231,6 +231,27 @@ textarea.code{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--
 .pvp-res.win{color:var(--accent)}.pvp-res.lose{color:var(--bad)}
 .name-in{font-size:16px;padding:12px}
 .gymtag{color:var(--accent)}
+.setbtn{flex:none;width:38px;background:var(--panel);border:1px solid var(--line);border-radius:10px;cursor:pointer;display:grid;place-items:center;padding:0}
+.setbtn svg{width:18px;height:18px}
+#dim{position:fixed;inset:0;pointer-events:none;z-index:60}
+input[type=range]{width:100%;accent-color:var(--accent);padding:0}
+.ricon{width:var(--rsz);height:var(--rsz);display:inline-grid;place-items:center;flex:none;border-radius:12px;background:var(--panel2);border:1px solid var(--rg);box-shadow:0 0 8px color-mix(in srgb,var(--rg) 45%,transparent)}
+.ricon svg{width:78%;height:78%}
+.relic .ricon{margin-bottom:2px}
+.ropen{position:relative;min-height:150px;display:flex;flex-direction:column;align-items:center}
+.rchest{position:absolute;top:14px;left:50%;width:88px;height:88px;margin-left:-44px;animation:rshake .6s ease-in-out,rgone .3s .6s ease-in forwards;z-index:2}
+.rchest svg{width:100%;height:100%}
+.rburst{position:absolute;top:-20px;left:50%;width:180px;height:180px;margin-left:-90px;border-radius:50%;background:radial-gradient(circle,rgba(255,230,150,.95),rgba(255,200,80,0) 65%);opacity:0;animation:rburst .8s .55s ease-out;pointer-events:none}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;width:100%;padding-top:6px}
+.ritem{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;text-align:center;opacity:0;transform:scale(.4) translateY(10px);animation:rpop .4s ease-out forwards}
+.ritem b{font-size:12px}
+.ritem.g2 .ricon,.ritem.g3 .ricon{animation:rglow 1s ease-in-out infinite alternate}
+@keyframes rshake{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(9deg)}60%{transform:rotate(-7deg)}80%{transform:rotate(7deg)}}
+@keyframes rgone{to{opacity:0;transform:scale(1.5)}}
+@keyframes rburst{0%{opacity:0;transform:scale(.3)}35%{opacity:1}100%{opacity:0;transform:scale(1.4)}}
+@keyframes rpop{to{opacity:1;transform:none}}
+@keyframes rglow{from{box-shadow:0 0 6px var(--rg)}to{box-shadow:0 0 20px var(--rg),0 0 4px #fff}}
+@media (prefers-reduced-motion:reduce){.rchest{display:none}.rburst{display:none}.ritem{animation:none;opacity:1;transform:none}.ritem .ricon{animation:none!important}}
 </style>
 
 <div class="app" id="app">
@@ -262,6 +283,7 @@ textarea.code{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--
 </div>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 <div class="toasts" id="toasts"></div>
+<div id="dim" aria-hidden="true"></div>
 <div class="starter" id="starter" hidden>
   <div class="starter-in">
     <h1 class="logo">포켓몬스토리<br><span>키우기</span></h1>
@@ -273,8 +295,9 @@ textarea.code{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--
 
 <script>
 'use strict';
-const GAME_VERSION='1.0.9';
+const GAME_VERSION='1.1.0';
 const PATCH_NOTES=[
+ {v:'1.1.0',d:'2026-10-10',items:['지역마다 다른 오리지널 배경음악과 보스전·전설 전투곡, 효과음 추가','설정 창 추가 (골드 옆 톱니바퀴): 음량, 밝기, 이펙트 품질, 데미지 숫자, 화면 흔들림, 쿠폰, 세이브 백업','스킬 이펙트 세분화: 타입별 15종 + 번개·지진·눈보라·솔라빔 등 대표 기술 전용 연출, 급소 번쩍임과 화면 흔들림','특성 확률표, 각성·공명 확률표 추가','밸런스: 타입 무효 특성(저수·축전·타오르는불꽃·부유)과 두꺼운지방은 에픽, 멀티스케일은 레전드리로 등급 상향','유물 그래픽과 유물 상자 개봉 연출 추가']},
  {v:'1.0.9',d:'2026-10-10',items:['튜토리얼 추가: 골드 옆 튜토리얼 버튼을 눌러 단계별로 진행하고 보상을 받으세요 (1-10 클리어 시 종료)','스타팅 포켓몬 개체값 S등급, 시작 스킬 2등급 2개','처음 시작 시 무료 유물 상자 20개','레전드리 유물은 4-10 클리어 후 등장 (그 전엔 에픽 확률 5%)']},
  {v:'1.0.8',d:'2026-10-10',items:['노말 스킬은 모든 포켓몬이 착용할 수 있어요 (노말 타입 포켓몬이 쓰면 위력 +10%)','유물 상자 가격 상한 50만 골드','처음 시작하면 유물 상자 10개 무료 지급','스타팅 포켓몬: 개체값 A등급, 특성 2개, 시작 스킬 2개(타입 스킬 + 노말 스킬)','스타팅 선택 화면에 추천 포켓몬(파이리) 표시','버그 수정: 근거리 포켓몬이 뒤쪽의 원거리 적에게 닿지 못해 공격하지 못하던 문제']},
  {v:'1.0.7',d:'2026-10-10',items:['패치노트를 볼 수 있어요 (트레이너 탭)','포켓몬 별명 기능: 능력치 화면에서 "귀요미(이상해씨)"처럼 이름을 붙일 수 있어요','전설의 포켓몬이 더 이상 일반 스테이지와 알에서 나오지 않습니다','포켓몬 알 가격: 5만 골드부터 1만씩 오르고 최대 25만 골드','6등급 이상 스킬의 주문서·숙련 비용이 등급마다 2배로 증가','밸런스 조정: 모든 스킬 위력 50%로 하향, 스킬 드랍 확률 20% 하향','안내 메시지가 화면 위쪽에 표시됩니다']}];
@@ -377,17 +400,17 @@ const TRAITS={
  speedboost:{n:'가속',g:1,d:'웨이브 시작 후 5초마다 공격 속도 +10% (최대 +50%)'},
  moxie:{n:'자기과신',g:1,d:'적을 쓰러뜨릴 때마다 공격 +6% (웨이브 동안, 최대 5회)'},
  regenerator:{n:'재생력',g:1,d:'웨이브 사이 최대 체력의 33% 추가 회복'},
- waterabsorb:{n:'저수',g:1,d:'물 타입 공격 무효'},
- voltabsorb:{n:'축전',g:1,d:'전기 타입 공격 무효'},
- flashfire:{n:'타오르는불꽃',g:1,d:'불꽃 타입 공격 무효'},
- levitate:{n:'부유',g:1,d:'땅 타입 공격 무효'},
- thickfat:{n:'두꺼운지방',g:1,d:'받는 불꽃·얼음 피해 절반'},
+ waterabsorb:{n:'저수',g:2,d:'물 타입 공격 무효'},
+ voltabsorb:{n:'축전',g:2,d:'전기 타입 공격 무효'},
+ flashfire:{n:'타오르는불꽃',g:2,d:'불꽃 타입 공격 무효'},
+ levitate:{n:'부유',g:2,d:'땅 타입 공격 무효'},
+ thickfat:{n:'두꺼운지방',g:2,d:'받는 불꽃·얼음 피해 절반'},
  ironfist:{n:'철주먹',g:1,d:'격투 기술 데미지 +25%',boost:{C:25}},
  dragonsmaw:{n:'용의턱',g:1,d:'드래곤 기술 데미지 +25%',boost:{X:25}},
  pressure:{n:'프레셔',g:1,d:'파티에 있으면 보스의 공격 속도 -20%'},
  adaptability:{n:'적응력',g:2,d:'자속 보정이 1.5배에서 2배로'},
  sheerforce:{n:'우격다짐',g:2,d:'기술 데미지 +30%, 대신 지속 피해 옵션이 발동하지 않음'},
- multiscale:{n:'멀티스케일',g:2,d:'체력이 가득일 때 받는 피해 절반'},
+ multiscale:{n:'멀티스케일',g:3,d:'체력이 가득일 때 받는 피해 절반'},
  reckless:{n:'이판사판',g:2,d:'기술 데미지 +35%, 대신 시전할 때마다 최대 체력 4% 반동'},
  unaware:{n:'천진',g:2,d:'상대의 방어·특수방어를 절반 무시'},
  skilllink:{n:'스킬링크',g:2,d:'연타 기술 타수 +2'},
@@ -441,6 +464,28 @@ const RELICS={
  heart:{g:3,n:'용맥의 심장',s:'hpPct',per:5,f:v=>`최대 HP +${v}%, 웨이브 사이 회복 +${pct(v/2)}%p`},
  gear:{g:3,n:'시간의 톱니바퀴',s:'offEff',per:2,f:v=>`오프라인 효율 +${v}%p (기본 20%)`}};
 const RELIC_MAX=10;
+const RELIC_SVG={
+ fossil:'<circle cx="20" cy="21" r="12" fill="#c8b48a"/><path d="M12 21a8 8 0 1 1 8 8a5 5 0 1 1-5-5a2.5 2.5 0 1 1 2.5 2.5" fill="none" stroke="#7a6440" stroke-width="2"/>',
+ moon:'<path d="M26 8a13 13 0 1 0 6 22a11 11 0 1 1-6-22z" fill="#f4f1d0"/><circle cx="16" cy="18" r="2" fill="#d8d2a8"/><circle cx="19" cy="27" r="1.5" fill="#d8d2a8"/>',
+ scale:'<path d="M20 6c8 4 12 10 12 17a12 12 0 0 1-24 0c0-7 4-13 12-17z" fill="#7a6aff"/><path d="M12 22a8 8 0 0 1 16 0M14 28a6 6 0 0 1 12 0" fill="none" stroke="#c8c0ff" stroke-width="2"/>',
+ feather:'<path d="M28 6C14 10 9 22 10 33c6-2 15-10 18-27z" fill="#a8e0ff"/><path d="M10 33L24 12" stroke="#5a8ab0" stroke-width="1.5"/>',
+ shell:'<path d="M6 28C8 14 32 14 34 28z" fill="#e8b4a0"/><path d="M20 28V15M20 28L12 17M20 28L28 17M20 28L8 23M20 28L32 23" stroke="#b07a6a" stroke-width="1.5"/><rect x="16" y="28" width="8" height="4" rx="1" fill="#b07a6a"/>',
+ sand:'<path d="M12 7h16M12 33h16M13 7c0 9 14 9 14 13s-14 4-14 13M27 7c0 9-14 9-14 13s14 4 14 13" fill="none" stroke="#c8a060" stroke-width="2.5"/><path d="M15 30c2-3 8-3 10 0v2H15z" fill="#e2c070"/>',
+ coin:'<circle cx="20" cy="20" r="13" fill="#f2c94c"/><circle cx="20" cy="20" r="9" fill="none" stroke="#b8901e" stroke-width="2"/><path d="M20 14l1.8 4 4.2.4-3.2 2.8 1 4.2-3.8-2.2-3.8 2.2 1-4.2-3.2-2.8 4.2-.4z" fill="#b8901e"/>',
+ book:'<rect x="9" y="7" width="22" height="26" rx="2" fill="#4a6ab8"/><rect x="9" y="7" width="5" height="26" fill="#2f4a8a"/><rect x="17" y="13" width="10" height="2" fill="#dfe6ff"/><rect x="17" y="18" width="8" height="2" fill="#dfe6ff"/>',
+ charm:'<path d="M20 4v8" stroke="#c8a060" stroke-width="2"/><path d="M20 12l9 9-9 12-9-12z" fill="#3fae6a"/><path d="M20 12l9 9-9 12-9-12z" fill="none" stroke="#f2c94c" stroke-width="2"/><circle cx="20" cy="21" r="3" fill="#d8ffe6"/>',
+ fang:'<path d="M12 8c6 0 16 2 16 6-4 6-6 13-7 20-3-8-7-14-9-26z" fill="#f4efe2" stroke="#b8b0a0" stroke-width="1.5"/>',
+ lens:'<circle cx="17" cy="17" r="9" fill="#bfe8ff" fill-opacity=".6" stroke="#5a6a80" stroke-width="3"/><path d="M24 24l9 9" stroke="#5a6a80" stroke-width="4" stroke-linecap="round"/><path d="M13 14a5 5 0 0 1 5-4" stroke="#fff" stroke-width="2" fill="none"/>',
+ plume:'<path d="M28 6C14 10 9 22 10 33c6-2 15-10 18-27z" fill="#ff6b6b"/><path d="M10 33L24 12" stroke="#a83a3a" stroke-width="1.5"/><path d="M24 10c-6 4-9 9-10 14" stroke="#ffd0d0" stroke-width="1.2" fill="none"/>',
+ pick:'<path d="M8 14C14 6 26 6 32 14C26 11 14 11 8 14z" fill="#9aa1b1"/><rect x="18.5" y="11" width="3" height="23" rx="1.5" fill="#8a5a2a"/>',
+ crystal:'<path d="M20 5l11 11-11 19L9 16z" fill="#b07cff"/><path d="M9 16h22M20 5l-4 11 4 19 4-19z" fill="none" stroke="#e0ccff" stroke-width="1.3"/>',
+ chain:'<rect x="5" y="15" width="16" height="10" rx="5" fill="none" stroke="#c0c6d4" stroke-width="3.5"/><rect x="19" y="15" width="16" height="10" rx="5" fill="none" stroke="#9aa1b1" stroke-width="3.5"/>',
+ ivstone:'<path d="M20 6l12 7v14l-12 7-12-7V13z" fill="#5fd38d"/><path d="M20 6v28M8 13l24 14M32 13L8 27" stroke="#2f8a58" stroke-width="1" opacity=".6"/>',
+ orb:'<circle cx="20" cy="20" r="12" fill="#7fc4ff"/><circle cx="20" cy="20" r="12" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/><circle cx="15" cy="15" r="4" fill="#fff" fill-opacity=".7"/><path d="M20 10a10 10 0 0 1 8 14" stroke="#ffd34d" stroke-width="2" fill="none"/>',
+ heart:'<path d="M20 33C8 24 6 17 9 12c3-5 9-4 11 1 2-5 8-6 11-1 3 5 1 12-11 21z" fill="#ff5a7a"/><path d="M14 13a4 4 0 0 1 4 1" stroke="#fff" stroke-width="2" fill="none"/>',
+ gear:'<path d="M20 6l3 4 5-1 1 5 4 3-3 4 3 4-4 3-1 5-5-1-3 4-3-4-5 1-1-5-4-3 3-4-3-4 4-3 1-5 5 1z" fill="#c8a060"/><circle cx="20" cy="20" r="5" fill="#8a6a3a"/>'};
+function relicIcon(k,sz){return`<span class="ricon" style="--rg:${RG_COL[RELICS[k].g]};--rsz:${sz}px"><svg viewBox="0 0 40 40" aria-hidden="true">${RELIC_SVG[k]||''}</svg></span>`}
+
 const REGIONS=[
  {name:'상록숲',col:'#2c5a3a',pool:[10,13,16,19,21,11,14],bt:'sturdy'},
  {name:'달맞이산',col:'#3a3558',pool:[41,35,46,74,39,27],bt:'waterabsorb'},
@@ -511,6 +556,7 @@ const UI={tab:'party',filter:'all',synth:false,sel:[],modal:null,dirty:true,tloc
 
 function newState(){return{v:2,ver:GAME_VERSION,stage:1,kills:0,maxStage:1,gold:0,
   items:{cube:2,acube:0,capsule:2,candy:0,t:0,f:0,w:0,l:0,m:0},mons:[],party:[],bag:[],relics:{},bagMax:BAG_BASE,boxMax:BOX_BASE,shop:{},
+  set:{bgm:60,sfx:70,bright:100,fx:'high',dmgNum:true,shake:true},coupons:{},
   autoBoss:true,mine:false,speed:1,uid:1,last:Date.now(),log:[],caught:{},seen:{},
   name:'레드',pid:Math.random().toString(36).slice(2,10),starter:4,badges:Array(10).fill(false),friends:[],pvp:{w:0,l:0},autoSynth:false,sellG:2,kps:0.3}}
 function save(){if(!S)return;try{S.last=Date.now();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -610,9 +656,9 @@ function secretBoss(ch){S.legend=S.legend||{};const pm=partyMons();const all3=t=
 function nextSpawn(){if(!S.mine&&S.autoBoss&&S.kills>=GOAL)startBoss();else{healBetween();spawnWave()}}
 function bossFail(){R.boss=false;R.legend=null;S.kills=0;R.enemies=[];R.waveDelay=0.6;R.ever++;
   toast('보스 제한시간 초과! 다시 파밍한 뒤 재도전합니다.','bad');log(`${stageLabel(S.stage)} 보스 시간 초과`)}
-function wipe(){const from=S.stage;R.legend=null;R.stageT=0;R.boss=false;S.stage=Math.max(1,S.stage-1);S.kills=0;R.enemies=[];R.waveDelay=1;R.ever++;R.pver++;fullHeal();
+function wipe(){sfx('lose');const from=S.stage;R.legend=null;R.stageT=0;R.boss=false;S.stage=Math.max(1,S.stage-1);S.kills=0;R.enemies=[];R.waveDelay=1;R.ever++;R.pver++;fullHeal();
   toast(`전멸했다… ${stageLabel(S.stage)}부터 다시 성장하며 도전합니다.`,'bad');log(`<b>${stageLabel(from)}</b>에서 전멸 → ${stageLabel(S.stage)}로 후퇴`)}
-function bossWin(){const gym=R.gym;const cur=S.stage;const lgWon=R.legend;R.legend=null;
+function bossWin(){sfx('win');const gym=R.gym;const cur=S.stage;const lgWon=R.legend;R.legend=null;
   if(lgWon){S.legend=S.legend||{};S.legend[lgWon]=true;const m=capture(lgWon,clamp(enemyLv(cur),1,LV_MAX),{force:true,quiet:true});
     if(m){toast(`전설의 포켓몬 <b>${D(lgWon).name}</b>이(가) 동료가 되었다!`,'gold');log(`전설의 포켓몬 <b>${D(lgWon).name}</b> 획득!`);setTimeout(()=>openModal('result',{title:`${D(lgWon).name} 획득!`,body:`${orb(lgWon,72)}<br>전설의 포켓몬 <b>${D(lgWon).name}</b>이(가) 동료가 되었다!`}),400)}}const clr=R.stageT||0;S.best=S.best||{};const prevBest=S.best[cur];if(!prevBest||clr<prevBest)S.best[cur]=clr;
   toast(`${stageLabel(cur)} 클리어 ${fmtTime(clr)}${prevBest?` (최고 ${fmtTime(Math.min(prevBest,clr))})`:' (첫 클리어)'}${S.repeat?' · 반복 중':''}`,clr<(prevBest||1e9)&&prevBest?'gold':'');
@@ -653,7 +699,7 @@ function hit(e,m,type,pow,cat,mul,o){
   if(o.exec&&e.hp<e.max*0.3)d*=1+o.exec/100;
   if(ef>1)d*=1+B.sup/100;d*=1+B.dmg/100;
   if(UI.god)d*=1000;
-  const crit=rnd()<(5+(hasT(m,'keeneye')?5:0)+(hasT(m,'superluck')?12:0)+(o.crit||0))/100;if(crit)d*=hasT(m,'sniper')?3:2;
+  const crit=rnd()<(5+(hasT(m,'keeneye')?5:0)+(hasT(m,'superluck')?12:0)+(o.crit||0))/100;if(crit){d*=hasT(m,'sniper')?3:2;if(CV.ctx){CV.flash=Math.max(CV.flash||0,0.08);shake(2.5);sfx('crit')}}
   if(tr==='sturdy'&&!e.sturdyUsed&&e.hp>=e.max&&d>=e.hp){d=e.hp-1;e.sturdyUsed=true;floatOn('e'+e.uid,'옹골참!','trait')}
   e.hp-=d;e.flash=0.12;floatOn('e'+e.uid,fmt(d),crit?'crit':ef>1?'sup':ef<1?'weak':'');
   if(B.steal){const rt=getRt(m);if(!rt.down)rt.hp=Math.min(rt.max,rt.hp+Math.min(d,e.max)*B.steal/100)}
@@ -663,12 +709,12 @@ function killEnemy(e,m){if(e.dead)return;e.dead=true;e.hp=0;if(m&&hasT(m,'moxie'
 function cast(m,s){
   const mv=MV(s),a=augs(s);const alive=R.enemies.filter(e=>!e.dead);if(!alive.length)return false;
   floatOn('u'+m.uid,mv.name,'info');
-  if(mv.kind==='buff'){R.buffUntil=R.t+8;R.buffVal=(15+3*s.g+(a.dmg||0)/2)/100;return true}
-  if(mv.kind==='debuff'){const v=(15+3*s.g+(a.dmg||0)/2)/100;alive.forEach(e=>{e.vuln=R.t+8;e.vulnVal=v});return true}
+  if(mv.kind==='buff'){fxBuff(s.t);R.buffUntil=R.t+8;R.buffVal=(15+3*s.g+(a.dmg||0)/2)/100;return true}
+  if(mv.kind==='debuff'){fxDebuff(s.t,alive);const v=(15+3*s.g+(a.dmg||0)/2)/100;alive.forEach(e=>{e.vuln=R.t+8;e.vulnVal=v});return true}
   let targets,pm=1;
   const prim=alive.reduce((b,e)=>e.x<b.x?e:b,alive[0]);const near=r=>alive.filter(e=>Math.abs(e.x-prim.x)<=r);let splash=false;
   if(mv.kind==='aoe'){targets=near(140);if(a.aoe)pm=1+a.aoe*0.004}else if(a.aoe){targets=near(140);pm=a.aoe/100}else{targets=[prim];splash=true}
-  fxSkill(m,prim,s.t,targets.length>1);
+  fxCast(m,prim,targets,s.t,mv,s.g);
   let mul=gradeMul(s.g)*(1+0.1*s.sc)*(1+(B.skill+(a.dmg||0))/100)*pm;
   if(hasT(m,'sheerforce'))mul*=1.3;if(hasT(m,'reckless'))mul*=1.35;
   const hits=mv.hits+(mv.kind==='multi'&&hasT(m,'skilllink')?2:0);
@@ -763,11 +809,11 @@ function capture(id,lvOverride,opts){const p=D(id);opts=opts||{};
   if(!opts.force&&S.mons.length>=S.boxMax){toast(`${p.name}를 잡을 뻔했지만 보관함이 가득 찼다! (최대 ${S.boxMax}, 상점에서 확장)`,'bad');log(`보관함 가득: ${p.name} 놓침`);return null}
   const lv=lvOverride||Math.max(1,Math.min(LV_MAX,Math.floor(S.stage*0.5)));const m=makeMon(id,lv,opts.traits,opts.iv);S.mons.push(m);
   const best=Math.max(...m.traits.map(k=>TRAITS[k].g));
-  if(!opts.quiet)toast(`${opts.admin?'':'야생의 '}<b>${p.name}</b>${opts.admin?' 지급':'를 포획했다!'} (Lv.${lv}, 특성 ${m.traits.length}개${best>=2?`, <b style="color:${TG_COL[best]}">${TG_N[best]}</b> 특성 보유`:''})`,'gold');
+  if(!opts.quiet){sfx('cap');}if(!opts.quiet)toast(`${opts.admin?'':'야생의 '}<b>${p.name}</b>${opts.admin?' 지급':'를 포획했다!'} (Lv.${lv}, 특성 ${m.traits.length}개${best>=2?`, <b style="color:${TG_COL[best]}">${TG_N[best]}</b> 특성 보유`:''})`,'gold');
   log(`<b>${p.name}</b> ${opts.admin?'지급(관리자)':'포획'} (Lv.${lv}, ${m.traits.map(k=>TRAITS[k].n).join('·')})`);return m}
-function gainExp(m,xp){if(m.lv>=LV_MAX)return;m.exp+=xp;let up=false;while(m.lv<LV_MAX&&m.exp>=need(m.lv)){m.exp-=need(m.lv);m.lv++;up=true;checkEvo(m)}if(m.lv>=LV_MAX)m.exp=0;if(up&&R.rt[m.uid])syncMax(m)}
+function gainExp(m,xp){if(m.lv>=LV_MAX)return;m.exp+=xp;let up=false;while(m.lv<LV_MAX&&m.exp>=need(m.lv)){m.exp-=need(m.lv);m.lv++;up=true;checkEvo(m)}if(m.lv>=LV_MAX)m.exp=0;if(up&&R.rt[m.uid]){syncMax(m);sfx('lvl')}}
 function checkEvo(m){const e=D(m.id).evo.find(e=>e.lv&&m.lv>=e.lv);if(e)evolve(m,e.to)}
-function evolve(m,to){const old=D(m.id).name;m.id=to;S.caught[to]=1;
+function evolve(m,to){sfx('evo');const old=D(m.id).name;m.id=to;S.caught[to]=1;
   m.skills.forEach((u,i)=>{const s=skBy(u);if(s&&!canEquip(s,m)){s.eq=null;m.skills[i]=null}});
   if(R.rt[m.uid])syncMax(m);
   toast(`축하합니다! <b>${old}</b>가 <b>${D(to).name}</b>로 진화했다!`,'gold');log(`${old} → <b>${D(to).name}</b> 진화`);R.pver++;UI.dirty=true;checkEvo(m)}
@@ -818,13 +864,82 @@ const SX=x=>x/WW*CV.w;
 const groundY=()=>CV.h*0.8;
 function unitPos(id){if(id[0]==='u'){const m=monBy(+id.slice(1));const rt=m&&R.rt[m.uid];return rt?{x:rt.x,top:62}:null}const e=R.enemies.find(x=>x.uid===+id.slice(1));return e?{x:e.x,top:e.boss?84:60}:null}
 const FL_COL={crit:['#ffd34d',18],sup:['#ff9a6b',15],weak:['#9aa1b1',13],info:['#cfe3ff',11],zero:['#9aa1b1',11],hurt:['#ff8080',13],heal:['#5fd38d',12],trait:['#ffb0d0',11]};
-function floatOn(id,text,cls){if(CV.fl.length>45)return;const p=unitPos(id);if(!p)return;CV.fl.push({x:p.x+(rnd()*20-10),top:p.top+6,text,cls:cls||'',t:0})}
-function addFx(o){if(CV.fx.length<60)CV.fx.push({t:0,...o})}
-function fxSkill(m,prim,type,aoe){const rt=getRt(m);if(roleOf(m)==='melee'){rt.lunge=0.15;addFx({k:'slash',x:prim.x,col:TC[type],dur:0.25})}else addFx({k:'shot',x0:rt.x+10,x1:prim.x,col:TC[type],dur:0.22,r:6})
-  if(aoe)addFx({k:'ring',x:prim.x,col:TC[type],dur:0.45,r:70})}
-function fxBasic(m,e){const rt=getRt(m);if(roleOf(m)==='melee'){rt.lunge=0.12}else addFx({k:'shot',x0:rt.x+10,x1:e.x,col:'#e8e2c8',dur:0.18,r:3})}
-function fxEnemyAtk(e,m){if(e.role==='melee')e.lunge=0.12;else addFx({k:'shot',x0:e.x-10,x1:getRt(m).x,col:TC[e.types[0]],dur:0.2,r:4})}
-function fxRing(x,col){addFx({k:'ring',x,col,dur:0.5,r:110})}
+function floatOn(id,text,cls){if(CV.fl.length>45)return;if(S&&S.set&&!S.set.dmgNum&&/^-?[\d.,]+[만억조경해]?$/.test(text))return;const p=unitPos(id);if(!p)return;CV.fl.push({x:p.x+(rnd()*20-10),top:p.top+6,text,cls:cls||'',t:0})}
+const FXC={F:['#ff7a2a','#ffd34d','#ff4d2a'],W:['#5ab0ff','#a8dcff','#2f7fe0'],G:['#6fd35a','#b6f08a','#3f9a3a'],E:['#ffe14d','#fff6b0','#f5c400'],I:['#bff4ff','#ffffff','#7fd8f0'],C:['#ffffff','#ffb08a','#e0574f'],P:['#c070d8','#e0a8f0','#8a3aa8'],D:['#c8a060','#8a6a3a','#e2c070'],A:['#ffffff','#d8d0ff','#b3a0f5'],S:['#ff8ac0','#ffc8e0','#fa6b98'],B:['#c8dc40','#8aa020','#e8f080'],R:['#b8a878','#8a7a52','#d8c898'],H:['#7a5ab0','#3a2860','#b090e0'],X:['#7a6aff','#40d0ff','#b080ff'],N:['#ffffff','#e8e2c8','#c8c0a8']};
+const FXS={F:'flame',W:'drop',G:'leaf',E:'spark',I:'shard',C:'star',P:'bubble',D:'rock',A:'swirl',S:'ring',B:'needle',R:'rock',H:'wisp',X:'flame',N:'star'};
+const SIG={'번개':'bolt','10만볼트':'zap','전기쇼크':'zap','파괴광선':'beam','하이드로펌프':'beam','오버히트':'beam','냉동빔':'beam','용의숨결':'beam','솔라빔':'charge','불대문자':'big','섀도볼':'orb','스톤에지':'spike','지진':'quake','땅가르기':'quake','눈보라':'snow','얼다바람':'snow','파도타기':'wave','거품광선':'wave','방전':'bolts','회오리불꽃':'firering','잎날가르기':'leafstorm','괴상한바람':'wisps','바위떨구기':'rockfall','스피드스타':'stars','사이코키네시스':'psy','사이코웨이브':'psy'};
+const fxQ=()=>S&&S.set&&S.set.fx==='low'?0.4:1;
+function addFx(o){if(CV.fx.length<(fxQ()<1?60:140))CV.fx.push({t:0,...o})}
+function part(o){if(CV.fx.length<(fxQ()<1?80:200))CV.fx.push({k:'p',t:0,rot:0,vr:0,g:0,...o})}
+function shake(v){if(S&&S.set&&S.set.shake)CV.shake=Math.max(CV.shake||0,v)}
+function burst(type,x,n,yOff){if(!CV.ctx)return;const cols=FXC[type]||FXC.N,sh=FXS[type]||'star',px=SX(x),py=groundY()-(yOff===undefined?32:yOff);n=Math.max(1,Math.round(n*fxQ()));
+  for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,sp=40+rnd()*110;let vx=Math.cos(a)*sp,vy=Math.sin(a)*sp,g=0;
+    if(sh==='flame'||sh==='bubble'||sh==='wisp'){vy=-30-rnd()*80;vx*=0.5}
+    if(sh==='drop'||sh==='rock'||sh==='shard'){g=320;vy=-60-rnd()*100}
+    if(sh==='leaf'){g=40;vy=-40-rnd()*60}
+    part({px,py,vx,vy,g,dur:0.4+rnd()*0.4,col:pick(cols),sz:2+rnd()*3.5,sh,rot:rnd()*6,vr:(rnd()-0.5)*10})}}
+const grN=g=>1+(g-1)*0.15;
+function fxCast(m,prim,targets,type,mv,g){if(!CV.ctx)return;sfx('skill',type);const rt=getRt(m),col=TC[type],n=grN(g),cx=rt.x+10,sig=SIG[mv.name];
+  const hitAll=()=>targets.forEach(e=>burst(type,e.x,9*n));
+  if(roleOf(m)==='melee'){rt.lunge=0.15;addFx({k:'slash',x:prim.x,col,dur:0.28});
+    if(sig==='quake'){shake(9);targets.forEach((e,i)=>{addFx({k:'spike',x:e.x,col:FXC.D[1],dur:0.55,h:32,t:-i*0.05});burst('D',e.x,7*n)})}
+    else if(targets.length>1){addFx({k:'ring',x:prim.x,col,dur:0.45,r:70});hitAll()}else burst(type,prim.x,12*n);
+    if(mv.pow*gradeMul(g)>3)shake(4);return}
+  const multiT=['bolts','quake','snow','wave','firering','leafstorm','wisps','rockfall','stars','psy'];
+  switch(sig){
+    case 'bolt':addFx({k:'bolt',x:prim.x,col,dur:0.35});shake(4);burst('E',prim.x,16*n);break;
+    case 'bolts':targets.forEach((e,i)=>{addFx({k:'bolt',x:e.x,col,dur:0.35,t:-i*0.08});burst('E',e.x,8*n)});shake(4);break;
+    case 'zap':addFx({k:'zap',x0:cx,x1:prim.x,col,dur:0.25,end:()=>burst('E',prim.x,12*n)});break;
+    case 'beam':addFx({k:'beam',x0:cx,x1:prim.x+12,col,dur:0.5,w:12+g*1.5,end:()=>burst(type,prim.x,16*n)});shake(5);break;
+    case 'charge':for(let i=0;i<14*fxQ();i++){const a=rnd()*7,d=40,px=SX(rt.x)+Math.cos(a)*d,py=groundY()-34+Math.sin(a)*d;part({px,py,vx:-Math.cos(a)*d/0.35,vy:-Math.sin(a)*d/0.35,dur:0.35,col:'#fff9b0',sz:2.5,sh:'dot'})}
+      addFx({k:'beam',x0:cx,x1:prim.x+12,col,dur:0.5,w:16+g*1.5,t:-0.35,end:()=>{burst('G',prim.x,18*n);shake(6)}});break;
+    case 'big':addFx({k:'shot',x0:cx,x1:prim.x,col,dur:0.3,r:10,end:()=>{burst(type,prim.x,26*n);addFx({k:'ring',x:prim.x,col,dur:0.4,r:60});shake(6)}});break;
+    case 'orb':addFx({k:'shot',x0:cx,x1:prim.x,col:'#6a44a8',dur:0.32,r:11,end:()=>burst('H',prim.x,16*n)});break;
+    case 'spike':addFx({k:'spike',x:prim.x,col:FXC.R[0],dur:0.55,h:42});burst('R',prim.x,10*n);shake(3);break;
+    case 'quake':shake(10);targets.forEach((e,i)=>{addFx({k:'spike',x:e.x,col:FXC.D[1],dur:0.55,h:32,t:-i*0.06});burst('D',e.x,8*n)});break;
+    case 'snow':for(let i=0;i<40*fxQ();i++)part({px:SX(prim.x-80+rnd()*200),py:-rnd()*40,vx:-20-rnd()*30,vy:90+rnd()*80,dur:0.9+rnd()*0.4,col:pick(FXC.I),sz:2+rnd()*2,sh:'shard',rot:rnd()*6,vr:3});hitAll();break;
+    case 'wave':addFx({k:'wave',x0:cx,x1:prim.x+90,col,dur:0.6,end:hitAll});break;
+    case 'firering':addFx({k:'ring',x:prim.x,col,dur:0.5,r:90});targets.forEach(e=>burst('F',e.x,14*n));break;
+    case 'leafstorm':for(let i=0;i<30*fxQ();i++)part({px:SX(cx),py:groundY()-30-rnd()*30,vx:180+rnd()*120,vy:(rnd()-0.5)*60,dur:0.8,col:pick(FXC.G),sz:3,sh:'leaf',rot:rnd()*6,vr:8});hitAll();break;
+    case 'wisps':targets.forEach(e=>{for(let i=0;i<10*fxQ();i++)part({px:SX(e.x)+(rnd()-0.5)*30,py:groundY()-20,vx:(rnd()-0.5)*30,vy:-40-rnd()*40,dur:0.8,col:pick(FXC.H),sz:4,sh:'wisp'})});break;
+    case 'rockfall':targets.forEach(e=>{for(let j=0;j<5*fxQ();j++)part({px:SX(e.x)+(rnd()-0.5)*30,py:-10-rnd()*40,vx:0,vy:200,g:500,dur:0.55,col:pick(FXC.R),sz:4+rnd()*3,sh:'rock',rot:rnd()*6,vr:4})});shake(4);break;
+    case 'stars':targets.forEach((e,i)=>addFx({k:'shot',x0:cx,x1:e.x,col:'#fff6a0',dur:0.3,r:5,arc:20,t:-i*0.06,end:()=>burst('N',e.x,6*n)}));break;
+    case 'psy':targets.forEach(e=>{for(let i=0;i<3;i++)part({px:SX(e.x),py:groundY()-34,vx:0,vy:0,dur:0.6,col:FXC.S[0],sz:6,sh:'ring',t:-i*0.12})});break;
+    default:
+      if(mv.kind==='multi'){for(let i=0;i<mv.hits;i++)targets.forEach(e=>addFx({k:'shot',x0:cx,x1:e.x,col,dur:0.2,r:4,t:-i*0.08,end:()=>burst(type,e.x,5*n)}))}
+      else if(targets.length>1){addFx({k:'ring',x:prim.x,col,dur:0.45,r:80});targets.forEach(e=>addFx({k:'shot',x0:cx,x1:e.x,col,dur:0.25,r:5,end:()=>burst(type,e.x,9*n)}))}
+      else addFx({k:'shot',x0:cx,x1:prim.x,col,dur:0.22,r:5+g*0.4,end:()=>burst(type,prim.x,12*n)})}
+  if(sig&&!multiT.includes(sig)&&targets.length>1)targets.forEach(e=>{if(e!==prim)burst(type,e.x,8*n)})}
+function fxBasic(m,e){if(!CV.ctx)return;const rt=getRt(m);if(roleOf(m)==='melee'){rt.lunge=0.12;burst('N',e.x,3)}else addFx({k:'shot',x0:rt.x+10,x1:e.x,col:'#e8e2c8',dur:0.18,r:3,end:()=>burst('N',e.x,2)})}
+function fxEnemyAtk(e,m){if(!CV.ctx)return;const t=e.types[0],tx=getRt(m).x;if(e.role==='melee'){e.lunge=0.12;burst(t,tx,4)}else addFx({k:'shot',x0:e.x-10,x1:tx,col:TC[t],dur:0.2,r:4,end:()=>burst(t,tx,4)})}
+function fxRing(x,col){if(!CV.ctx)return;addFx({k:'ring',x:120,col,dur:0.55,r:120});partyMons().forEach(m=>{const rt=R.rt[m.uid];if(rt)burst('C',rt.x,6)});shake(6)}
+function fxBuff(type){if(!CV.ctx)return;sfx('buff');const cols=FXC[type]||FXC.N;partyMons().forEach(m=>{const rt=R.rt[m.uid];if(!rt)return;addFx({k:'ring',x:rt.x,col:cols[0],dur:0.5,r:30});
+  for(let i=0;i<10*fxQ();i++)part({px:SX(rt.x)+(rnd()-0.5)*36,py:groundY()-rnd()*20,vx:0,vy:-50-rnd()*60,dur:0.7,col:pick(cols),sz:2.5,sh:'dot'})})}
+function fxDebuff(type,list){if(!CV.ctx)return;sfx('skill',type);list.forEach(e=>{for(let i=0;i<6*fxQ();i++)part({px:SX(e.x)+(rnd()-0.5)*40,py:groundY()-70-rnd()*14,vx:(rnd()-0.5)*20,vy:-6,dur:0.9,col:'#4a3a6a',sz:7+rnd()*5,sh:'puff'})})}
+function star(ctx,r){ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?r*0.4:r;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}ctx.closePath();ctx.fill()}
+function drawFx(ctx,dt,gy){const keep=[];for(const f of CV.fx){f.t+=dt;if(f.t>=f.dur){if(f.end){const e=f.end;f.end=null;e()}continue}keep.push(f)}CV.fx=keep;
+  for(const f of CV.fx){if(f.t<0)continue;const k=f.t/f.dur;ctx.save();
+    if(f.k==='p'){f.vy+=f.g*dt;f.px+=f.vx*dt;f.py+=f.vy*dt;f.rot+=f.vr*dt;ctx.globalAlpha=Math.max(0,1-k);ctx.fillStyle=f.col;ctx.strokeStyle=f.col;const s=f.sz*(f.sh==='flame'||f.sh==='wisp'?1+k:1);ctx.translate(f.px,f.py);ctx.rotate(f.rot);
+      if(f.sh==='leaf'){ctx.beginPath();ctx.ellipse(0,0,s*1.6,s*0.7,0,0,7);ctx.fill()}
+      else if(f.sh==='spark'||f.sh==='needle'){ctx.lineWidth=f.sh==='spark'?2:1.5;ctx.beginPath();ctx.moveTo(-s*1.5,0);ctx.lineTo(s*1.5,0);ctx.stroke()}
+      else if(f.sh==='shard'){ctx.beginPath();ctx.moveTo(0,-s*1.6);ctx.lineTo(s*0.7,s);ctx.lineTo(-s*0.7,s);ctx.fill()}
+      else if(f.sh==='star')star(ctx,s*1.4);
+      else if(f.sh==='rock')ctx.fillRect(-s,-s,s*2,s*2);
+      else if(f.sh==='swirl'){ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(0,0,s*2,0,4);ctx.stroke()}
+      else if(f.sh==='ring'){ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,s*(1+k*4),0,7);ctx.stroke()}
+      else if(f.sh==='bubble'){ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(0,0,s,0,7);ctx.stroke()}
+      else if(f.sh==='puff'){ctx.globalAlpha=(1-k)*0.55;ctx.beginPath();ctx.arc(0,0,s*(1+k*0.6),0,7);ctx.fill()}
+      else{ctx.beginPath();ctx.arc(0,0,s,0,7);ctx.fill()}}
+    else if(f.k==='shot'){const x=SX(f.x0+(f.x1-f.x0)*k),y=gy-(f.y||32)-Math.sin(k*Math.PI)*(f.arc||0);ctx.shadowColor=f.col;ctx.shadowBlur=12;ctx.fillStyle=f.col;ctx.beginPath();ctx.arc(x,y,f.r,0,7);ctx.fill();
+      ctx.globalAlpha=0.45;const dir=f.x1>f.x0?-1:1;for(let i=1;i<=3;i++){ctx.beginPath();ctx.arc(x+dir*i*6,y,f.r*(1-i*0.22),0,7);ctx.fill()}ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,f.r*0.4,0,7);ctx.fill()}
+    else if(f.k==='zap'){const x0=SX(f.x0),x1=SX(f.x0+(f.x1-f.x0)*Math.min(1,k*1.6)),y=gy-34;ctx.strokeStyle=f.col;ctx.lineWidth=3;ctx.shadowColor=f.col;ctx.shadowBlur=10;ctx.beginPath();ctx.moveTo(x0,y);for(let i=1;i<=8;i++)ctx.lineTo(x0+(x1-x0)*i/8,y+(i<8?(rnd()-0.5)*16:0));ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()}
+    else if(f.k==='bolt'){const x=SX(f.x);ctx.globalAlpha=1-k;ctx.strokeStyle=f.col;ctx.lineWidth=4;ctx.shadowColor=f.col;ctx.shadowBlur=14;ctx.beginPath();let cx=x;ctx.moveTo(cx,0);for(let yy=0;yy<gy-20;yy+=14){cx=x+(rnd()-0.5)*22;ctx.lineTo(cx,yy+14)}ctx.lineTo(x,gy-20);ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke()}
+    else if(f.k==='beam'){const x0=SX(f.x0),x1=SX(f.x1),y=gy-34,w=f.w*(k<0.2?k/0.2:1-(k-0.2)/0.8*0.7);ctx.shadowColor=f.col;ctx.shadowBlur=16;ctx.fillStyle=f.col;ctx.globalAlpha=0.85;ctx.fillRect(Math.min(x0,x1),y-w/2,Math.abs(x1-x0),w);ctx.fillStyle='#fff';ctx.globalAlpha=0.9;ctx.fillRect(Math.min(x0,x1),y-w/6,Math.abs(x1-x0),w/3)}
+    else if(f.k==='ring'){ctx.strokeStyle=f.col;ctx.globalAlpha=1-k;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(SX(f.x),gy-10,f.r*k+8,(f.r*k+8)*0.35,0,0,7);ctx.stroke()}
+    else if(f.k==='slash'){ctx.strokeStyle=f.col;ctx.globalAlpha=1-k;ctx.lineWidth=5;ctx.shadowColor=f.col;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(SX(f.x)-6,gy-34,24,-1.3+k*1.2,0.5+k*1.2);ctx.stroke();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke()}
+    else if(f.k==='wave'){const x=SX(f.x0+(f.x1-f.x0)*k);ctx.fillStyle=f.col;ctx.globalAlpha=0.55*(1-k*0.5);ctx.beginPath();ctx.moveTo(x-40,gy);for(let i=0;i<=40;i+=4)ctx.lineTo(x-40+i*1.5,gy-30-Math.sin(i/40*Math.PI)*26);ctx.lineTo(x+20,gy);ctx.fill();ctx.strokeStyle='#fff';ctx.globalAlpha=0.6;ctx.lineWidth=2;ctx.stroke()}
+    else if(f.k==='spike'){const x=SX(f.x),h=Math.min(1,k*3)*f.h*(1-Math.max(0,k-0.7)/0.3);ctx.fillStyle=f.col;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(x+i*12-7,gy);ctx.lineTo(x+i*12,gy-h*(i?0.7:1));ctx.lineTo(x+i*12+7,gy);ctx.fill()}}
+    ctx.restore()}}
 function drawMon(ctx,id,x,y,size,flip,o){const sp=sprite(id),p=D(id);ctx.save();ctx.translate(x,y);
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,0,size*0.3,size*0.08,0,0,7);ctx.fill();
   if(o.down){ctx.globalAlpha=0.35;ctx.translate(0,-size*0.15);ctx.rotate(flip?-1.45:1.45)}
@@ -888,6 +1003,7 @@ function renderBattle(now){
   const ctx=CV.ctx;if(!ctx)return;if(!CV.w)cvResize();
   const dt=Math.min(0.1,(now-(CV.last||now))/1000)*S.speed;CV.last=now;
   ctx.setTransform(CV.dpr,0,0,CV.dpr,0,0);const W=CV.w,H=CV.h,gy=groundY();
+  if(CV.shake>0.3){ctx.translate((Math.random()-0.5)*CV.shake,(Math.random()-0.5)*CV.shake);CV.shake*=0.86}else CV.shake=0;
   if(R.walking)CV.scroll+=dt*90;
   drawBg(ctx,W,H,gy,now);
   const font=(s,w)=>`${w||600} ${s}px "Gothic A1",system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='alphabetic';
@@ -908,27 +1024,23 @@ function renderBattle(now){
     m.skills.forEach((u,j)=>{const s=skBy(u);if(!s)return;bar(ctx,x-16+j*11,top+6,9,2,1-rt.cd[j]/skCd(s,m),TC[s.t])});
     ctx.font=font(10);label(ctx,`${monShort(m)} Lv.${m.lv}`,x,top-4);
     ctx.font=font(9,700);ctx.fillStyle=i===0?'#ff9a6b':'#7fc4ff';ctx.fillText(i===0?'근':'원',x-28,top+5)}
-  // 이펙트
-  CV.fx=CV.fx.filter(f=>(f.t+=dt)<f.dur);for(const f of CV.fx){const k=f.t/f.dur;ctx.save();
-    if(f.k==='shot'){const x=SX(f.x0+(f.x1-f.x0)*k),y=gy-30;ctx.fillStyle=f.col;ctx.shadowColor=f.col;ctx.shadowBlur=10;ctx.beginPath();ctx.arc(x,y,f.r,0,7);ctx.fill();ctx.globalAlpha=0.4;ctx.beginPath();ctx.arc(x-(f.x1>f.x0?8:-8),y,f.r*0.7,0,7);ctx.fill()}
-    else if(f.k==='ring'){ctx.strokeStyle=f.col;ctx.globalAlpha=1-k;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(SX(f.x),gy-10,f.r*k+8,(f.r*k+8)*0.35,0,0,7);ctx.stroke()}
-    else if(f.k==='slash'){ctx.strokeStyle=f.col;ctx.globalAlpha=1-k;ctx.lineWidth=4;ctx.beginPath();ctx.arc(SX(f.x)-6,gy-32,22,-1.2+k,0.6+k);ctx.stroke()}
-    ctx.restore()}
+  drawFx(ctx,dt,gy);
   // 데미지 숫자
   CV.fl=CV.fl.filter(f=>(f.t+=dt/ Math.max(1,S.speed)*1)<0.9);for(const f of CV.fl){const c=FL_COL[f.cls]||['#ffffff',14];ctx.globalAlpha=1-f.t/0.9;ctx.font=`${c[1]}px "Do Hyeon",sans-serif`;ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.7)';const x=SX(f.x),y=gy-f.top-f.t*40;ctx.strokeText(f.text,x,y);ctx.fillStyle=c[0];ctx.fillText(f.text,x,y)}ctx.globalAlpha=1;
+  if(CV.flash>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(0.35,CV.flash*2.5)})`;ctx.fillRect(-20,-20,W+40,H+40);CV.flash-=dt/Math.max(1,S.speed)}
   // 상단 정보
   ctx.textAlign='left';ctx.font=font(11);ctx.fillStyle='#ffe08a';let ty=16;
   if(UI.god){ctx.fillText('[무적]',10,ty);ty+=14}
   if(R.t<R.buffUntil){ctx.fillText(`공격 +${Math.round(R.buffVal*100)}% (${(R.buffUntil-R.t).toFixed(0)}초)`,10,ty);ty+=14}
   if(R.walking&&!R.enemies.some(e=>!e.dead)){ctx.fillStyle='rgba(236,238,245,.6)';ctx.fillText('이동 중…',10,ty)}
 }
-function renderHeader(){
+function renderHeader(){musicUpdate();
   $('#stageNo').textContent=stageLabel(S.stage);const gi=Math.floor((S.stage-1)/10)%10;$('#region').textContent=S.mine?'광산 (진화의 돌 파밍)':(R.boss&&R.gym!==null)?`${GYMS[R.gym].title} · ${GYMS[R.gym].leader}`:`${REG().name} · 적 Lv.${enemyLv(S.stage)}${(S.stage-1)%10===9?` · ${GYMS[gi].title} 도전`:''}${farmPen(S.stage)?` · 보상 -${farmPen(S.stage)}%`:''}`;
   $('#field').style.setProperty('--regc',S.mine?'#3a3f4a':REG().col);
   const pg=$('#prog');pg.className='prog'+(R.boss?' boss':S.mine?' mine':'');
   let w,l;if(R.boss){w=R.bossT/R.bossMax;l=`보스 ${Math.max(0,R.bossT).toFixed(1)}초`}else if(S.mine){w=1;l='파밍 중'}else{w=S.kills/GOAL;l=`처치 ${S.kills}/${GOAL}`}
   pg.firstChild.style.width=(w*100)+'%';$('#progLabel').textContent=`${l} · ${fmtTime(R.stageT||0)}${S.best&&S.best[S.stage]?` (최고 ${fmtTime(S.best[S.stage])})`:''}${S.speed>1?` · ×${S.speed}`:''}`;
-  if(!$('#invGold'))$('#res').innerHTML=`<button class="invbtn" data-act="inv">${itemIcon('gold',20)}<span>골드 <b id="invGold"></b></span><span>인벤토리 ›</span></button><button class="tutbtn" id="tutBtn" data-act="tut" hidden>튜토리얼</button>`;
+  if(!$('#invGold'))$('#res').innerHTML=`<button class="invbtn" data-act="inv">${itemIcon('gold',20)}<span>골드 <b id="invGold"></b></span><span>인벤토리 ›</span></button><button class="tutbtn" id="tutBtn" data-act="tut" hidden>튜토리얼</button><button class="setbtn" data-act="settings" aria-label="설정"><svg viewBox="0 0 24 24" fill="none" stroke="#8e96aa" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>`;
   {const tb=document.getElementById('tutBtn');if(tb){if(S.tutDone)tb.hidden=true;else{tb.hidden=false;const lbl=`튜토리얼 ${S.tut+1}/${TUT.length}${TUT[S.tut].chk()?' · 보상!':''}`;if(tb.textContent!==lbl)tb.textContent=lbl;tb.classList.toggle('ready',TUT[S.tut].chk())}}}
   const ig=document.getElementById('invGold');if(ig&&ig.textContent!==fmt(S.gold))ig.textContent=fmt(S.gold);
   const bb=$('#bBoss');bb.textContent=R.boss?'보스전 진행 중':S.autoBoss?'자동 진행 ON':'자동 진행 OFF';bb.classList.toggle('on',S.autoBoss&&!R.boss);
@@ -982,7 +1094,7 @@ relic(){const w=relicWeights();const tot=w.reduce((a,x)=>a+x,0)||1;
   <div class="row"><button class="btn pri grow" data-act="relicDraw" ${S.gold>=relicPrice()&&!relicsAllMax()?'':'disabled'}>유물 상자 열기 · ${fmt(relicPrice())}골드</button><button class="btn" data-act="relicDraw" data-n="10" ${S.gold>=relicPrice10()&&!relicsAllMax()?'':'disabled'}>10회 · ${fmt(relicPrice10())}</button></div>
   ${RG_N.map((n,g)=>{const ks=Object.keys(RELICS).filter(k=>RELICS[k].g===g);const have=ks.reduce((a,k)=>a+(S.relics[k]||0),0);
     return`<div class="rgrade"><b style="color:${RG_COL[g]}">${n}</b><span class="sub">${have}/${ks.length*RELIC_MAX}</span></div><div class="grid">${ks.map(k=>{const r=RELICS[k],lv=S.relics[k]||0;
-      return`<div class="relic${lv?'':' off'}" style="border-color:${lv?RG_COL[g]:'var(--line)'}"><span class="lvl">Lv.${lv}/${RELIC_MAX}</span><b>${r.n}</b><span class="sub">${r.f(pct(r.per*Math.max(lv,1)))}${lv?'':' (미보유)'}</span></div>`}).join('')}</div>`}).join('')}</div>`},
+      return`<div class="relic${lv?'':' off'}" style="border-color:${lv?RG_COL[g]:'var(--line)'}">${relicIcon(k,40)}<span class="lvl">Lv.${lv}/${RELIC_MAX}</span><b>${r.n}</b><span class="sub">${r.f(pct(r.per*Math.max(lv,1)))}${lv?'':' (미보유)'}</span></div>`}).join('')}</div>`}).join('')}</div>`},
 shop(){const row=(name,desc,price,act,extra,dis,ic)=>`<div class="shop-row">${ic?itemIcon(ic,36):''}<span class="grow"><b>${name}</b><br><span class="sub">${desc}</span></span><button class="btn sm pri" data-act="${act}" ${extra||''} ${(dis||S.gold<price)?'disabled':''}>${price===Infinity?'최대':fmt(price)+'골드'}</button></div>`;
   const bagFull=S.bagMax>=BAG_CAP,boxFull=S.boxMax>=BOX_CAP;
   return`<div class="card"><div class="row"><h3 class="grow">상점</h3><span class="sub">보유 골드 ${fmt(S.gold)}</span></div>
@@ -1021,7 +1133,7 @@ trainer(){const nb=S.badges.filter(Boolean).length;
   <div class="sec"><b>뱃지 케이스</b><div class="badges">${GYMS.map((g,i)=>`<div class="badge ${S.badges[i]?'on':'off'}"><i style="--bc:${g.col}">${S.badges[i]?i+1:'?'}</i>${g.badge}</div>`).join('')}</div>
   <p class="sub" style="margin:0">각 지역 마지막 스테이지(1-10, 2-10 …)에서 체육관 관장과 싸워 이기면 뱃지를 얻습니다. 9-10은 사천왕, 10-10은 챔피언입니다.</p></div></div>
   <div class="card"><h3>기록</h3><div class="log">${S.log.map(l=>`<div>${new Date(l.t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} · ${l.m}</div>`).join('')||'<div>아직 기록이 없습니다.</div>'}</div></div>
-  <div class="card"><h3>설정</h3><p class="sub" style="margin:0">게임 버전 ${GAME_VERSION}. 진행 상황은 5초마다 이 기기에 자동 저장되고, 새 버전이 올라오면 저장 후 자동으로 업데이트됩니다. 포켓몬 이미지는 PokeAPI에서 불러옵니다.</p><div class="row"><button class="btn warn" data-act="resetAsk">진행 초기화</button></div></div>`}
+  <div class="card"><div class="row"><h3 class="grow">설정</h3><button class="btn sm pri" data-act="settings">설정 열기</button></div><p class="sub" style="margin:0">게임 버전 ${GAME_VERSION}. 진행 상황은 5초마다 이 기기에 자동 저장되고, 새 버전이 올라오면 저장 후 자동으로 업데이트됩니다. 포켓몬 이미지는 PokeAPI에서 불러옵니다.</p><div class="row"><button class="btn warn" data-act="resetAsk">진행 초기화</button></div></div>`}
 };
 function renderPanel(){if(!S)return;$('#panel').innerHTML=PANELS[UI.tab]();document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.t===UI.tab));UI.dirty=false}
 
@@ -1035,7 +1147,7 @@ const head=(t,pre)=>`<div class="sheet-h">${pre||''}<h2>${t}</h2><button class="
 const MODALS={
 skill(uid){const s=skBy(uid);if(!s)return null;const mv=MV(s),a=augs(s),eqm=s.eq?monBy(s.eq):null;s.isNew=false;
   const potBlock=(key,label,item)=>{const p=s[key];const have=S.items[item];const nm=ITEM_N[item];
-    return`<div class="sec"><div class="sec-h"><b>${label}</b>${p?`<span class="tier" style="color:${TIER_COL[p.tier]}">${TIER_N[p.tier]}</span>`:'<span class="sub">미개방</span>'}</div>
+    return`<div class="sec"><div class="sec-h"><b>${label} <button class="tchip" style="--tg:var(--accent)" data-act="augList">확률표</button></b>${p?`<span class="tier" style="color:${TIER_COL[p.tier]}">${TIER_N[p.tier]}</span>`:'<span class="sub">미개방</span>'}</div>
     ${p?`<div class="lines">${p.lines.map(k=>`<div>${AUG[k].n}: ${AUG[k].d(AUG[k].v[p.tier])}</div>`).join('')}</div>`:`<p class="sub" style="margin:0">${key==='pot'?'각성의 구슬로 개방하면 스킬의 성질이 바뀌는 옵션 2줄이 붙습니다.':'각성과 별도로 옵션 1줄이 추가로 붙습니다.'}</p>`}
     <div class="row"><button class="btn sm pri" data-act="cube" data-k="${key}" data-uid="${s.uid}" ${have?'':'disabled'}>${p?'재설정':'개방'} (${nm} · 보유 ${have})</button><button class="btn sm" data-act="buyCube" data-k="${item}" ${S.gold>=cubePrice()*(item==='acube'?4:1)?'':'disabled'}>구슬 구매 ${fmt(cubePrice()*(item==='acube'?4:1))}골드</button></div></div>`};
   return head(`${mv.name}${s.sc?` +${s.sc}`:''}`,`<span class="g${s.g===10?' g10':''}" style="--gc:${GRADE_COL[s.g]};height:30px;min-width:34px;font-size:18px">${s.g}</span>`)+
@@ -1065,7 +1177,7 @@ mon(uid){const m=monBy(uid);if(!m)return null;const p=D(m.id),inP=S.party.includ
   <tr><td>합계</td><td>${p.bst}</td><td>${ivSum} <span class="ivg${avgG==='SS'?' ss':''}" style="--ivc:${IVG_COL[avgG]}">${avgG}</span></td><td></td></tr></tbody></table></div>
   ${roleOf(m)?`<p class="sub" style="margin:0"><span class="role" style="--rc:${ROLE_MOD[roleOf(m)].col}">${ROLE_MOD[roleOf(m)].n}</span> 파티 역할 보정: ${ROLE_MOD[roleOf(m)].d}. 표의 실수치는 보정 전 값입니다.</p>`:''}
   <p class="sub" style="margin:0">개체값 1~20 D · 21~40 C · 41~60 B · 61~80 A · 81~99 S · 100 SS. 개체값은 포획 시 정해지며 바뀌지 않습니다. 게임 내 HP는 실수치의 ${HP_MUL}배입니다.</p>
-  <div class="sec"><div class="sec-h"><b>특성 ${m.traits.length}/3</b><span class="sub">특성결정 보유 ${S.items.capsule}</span></div>
+  <div class="sec"><div class="sec-h"><b>특성 ${m.traits.length}/3</b><span class="sub">특성결정 보유 ${S.items.capsule} · <button class="tchip" style="--tg:var(--accent)" data-act="traitList">특성 확률표</button></span></div>
   ${m.traits.map((k,i)=>{const t=TRAITS[k];return`<label class="trait-line"><span class="grow"><b style="color:${TG_COL[t.g]}">${t.n}</b> <span class="tier" style="color:${TG_COL[t.g]}">${TG_N[t.g]}</span><br><span class="sub">${t.d}</span></span>${m.traits.length>1?`<input type="checkbox" id="tl${uid}-${i}" data-act="tlock" data-i="${i}" ${UI.tlocks[i]?'checked':''} aria-label="${t.n} 잠금">`:''}</label>`}).join('')}
   <div class="row"><button class="btn sm pri" data-act="treroll" data-uid="${uid}" ${canRe?'':'disabled'}>특성 재설정 (특성결정 ${cost}개)</button><span class="sub grow">특성 개수는 그대로, 등급은 노말 60% · 희귀 28% · 에픽 10% · 레전드리 2%. 잠근 특성은 유지되고 특성결정이 1개씩 더 듭니다.</span></div></div>
   <div class="row"><button class="btn sm" data-act="useCandy" data-uid="${uid}" ${S.items.candy&&m.lv<LV_MAX?'':'disabled'}>이상한사탕 사용 (보유 ${S.items.candy})</button><button class="btn sm" data-act="useCandy" data-uid="${uid}" data-all="1" ${S.items.candy&&m.lv<LV_MAX?'':'disabled'}>최대한 사용</button></div>
@@ -1085,6 +1197,37 @@ tut(){if(S.tutDone)return null;const s=TUT[S.tut],ok=s.chk();
   <div class="shop-row"><span class="grow"><b>보상</b><br><span class="sub">${tutRewardText(s.r)}</span></span><b style="color:${ok?'var(--good)':'var(--muted)'}">${ok?'완료!':'진행 중'}</b></div>
   <div class="row"><button class="btn pri" data-act="tutClaim" ${ok?'':'disabled'}>보상 받기</button>${s.go&&!ok?`<button class="btn" data-act="tutGo" data-t="${s.go}">바로 가기</button>`:''}<button class="btn" data-act="close">닫기</button></div>
   <p class="sub" style="margin:0">1-10 관장을 이기면 튜토리얼이 끝나고, 받지 않은 보상은 그때 한꺼번에 지급됩니다.</p>`},
+settings(){const st=S.set;const tg=(k,on,off)=>`<button class="btn sm${st[k]?' on':''}" data-act="setToggle" data-k="${k}">${st[k]?on:off}</button>`;
+  return head('설정')+`<div class="sec"><b>소리</b>
+   <label class="fld" for="setBgm">배경음악 <span id="vbgm">${st.bgm}</span>%<input type="range" id="setBgm" min="0" max="100" step="5" value="${st.bgm}" data-act="setRange" data-k="bgm"></label>
+   <label class="fld" for="setSfx">효과음 <span id="vsfx">${st.sfx}</span>%<input type="range" id="setSfx" min="0" max="100" step="5" value="${st.sfx}" data-act="setRange" data-k="sfx"></label>
+   <p class="sub" style="margin:0">배경음악은 지역마다 다른 오리지널 곡이에요. 브라우저에서는 화면을 한 번 터치해야 소리가 납니다.</p></div>
+  <div class="sec"><b>화면</b>
+   <label class="fld" for="setBright">밝기 <span id="vbright">${st.bright}</span>%<input type="range" id="setBright" min="50" max="130" step="5" value="${st.bright}" data-act="setRange" data-k="bright"></label>
+   <div class="row"><span class="grow">스킬 이펙트</span><button class="btn sm${st.fx==='high'?' on':''}" data-act="setFx" data-v="high">화려하게</button><button class="btn sm${st.fx==='low'?' on':''}" data-act="setFx" data-v="low">가볍게</button></div>
+   <div class="row"><span class="grow">데미지 숫자</span>${tg('dmgNum','표시','숨김')}</div>
+   <div class="row"><span class="grow">화면 흔들림</span>${tg('shake','켜짐','꺼짐')}</div></div>
+  <div class="sec"><b>쿠폰</b><div class="row"><input id="couponIn" class="grow" autocomplete="off" placeholder="쿠폰 코드 입력" aria-label="쿠폰 코드"><button class="btn sm pri" data-act="coupon">사용</button></div></div>
+  <div class="sec"><b>게임 정보</b><div class="row"><button class="btn sm" data-act="patchNotes">패치노트</button><button class="btn sm" data-act="traitList">특성 확률표</button><button class="btn sm" data-act="augList">각성·공명 확률표</button></div></div>
+  <div class="sec"><b>세이브 백업</b><p class="sub" style="margin:0">폰을 바꾸거나 앱을 다시 설치할 때 백업 코드로 진행 상황을 옮길 수 있어요.</p>
+   <div class="row"><button class="btn sm" data-act="backupCopy">백업 코드 복사</button></div>
+   <textarea id="backupIn" class="code" rows="2" placeholder="백업 코드를 붙여넣고 불러오기를 누르세요"></textarea><div class="row"><button class="btn sm warn" data-act="backupAsk">백업 불러오기</button><button class="btn sm warn" data-act="resetAsk">진행 초기화</button></div></div>
+  <p class="sub" style="margin:0">버전 ${GAME_VERSION} · 트레이너 ${esc(S.name)}</p>`},
+traitList(){const up=1+((B&&B.augup)||0)/100;const w=[TG_W[0],TG_W[1]*up,TG_W[2]*up,TG_W[3]*up];const ws=w.reduce((a,b)=>a+b,0);
+  return head('특성 목록 · 확률')+`<p class="sub" style="margin:0">포획·알로 얻을 때 특성 개수는 1개 89% · 2개 10% · 3개 1%예요. 각 칸의 등급은 아래 확률로 정해지고, 같은 등급 안에서는 똑같은 확률로 뽑힙니다. 특성결정으로 재설정하면 개수는 그대로예요.${B.augup?' (각성의 결정 유물 효과로 높은 등급 확률 증가 중)':''}</p>`+
+  [3,2,1,0].map(g=>{const ks=Object.keys(TRAITS).filter(k=>TRAITS[k].g===g);const gp=w[g]/ws*100;
+    return`<div class="sec"><div class="sec-h"><b style="color:${TG_COL[g]}">${TG_N[g]} · ${pct(gp)}%</b><span class="sub">${ks.length}종 · 하나당 ${pct(gp/ks.length)}%</span></div><div class="lines">${ks.map(k=>`<div><b>${TRAITS[k].n}</b> — ${TRAITS[k].d}</div>`).join('')}</div></div>`}).join('')},
+augList(){const ws=Object.values(AUG).reduce((a,x)=>a+x.w,0);const up=1+((B&&B.augup)||0)/100;
+  const sd={aoe:'단일기를 광역기로 (수치 = 광역 위력 %)',dmg:'스킬 데미지 +%',multi:'추가 타격 (수치 = 위력 %)',dot:'5초 지속 피해 (초당 %)',crit:'이 스킬의 급소 확률 +%p',exec:'체력 30% 이하 적에게 데미지 +%',reset:'쿨타임 즉시 초기화 확률 %',boss:'보스 데미지 +%'};
+  return head('각성 · 공명 확률표')+`<p class="sub" style="margin:0">각성은 서로 다른 옵션 2줄, 공명은 1줄이 붙어요. 구슬을 쓸 때마다 아래 확률로 등급이 오르고 옵션은 새로 뽑힙니다.</p>
+  <div class="sec"><b>등급 상승 확률 (구슬 1개당)</b><div class="lines"><div><span style="color:${TIER_COL[0]}">레어</span> → <span style="color:${TIER_COL[1]}">에픽</span> ${pct(8*up)}%</div><div><span style="color:${TIER_COL[1]}">에픽</span> → <span style="color:${TIER_COL[2]}">유니크</span> ${pct(3*up)}%</div><div><span style="color:${TIER_COL[2]}">유니크</span> → <span style="color:${TIER_COL[3]}">레전드리</span> ${pct(1*up)}%</div></div></div>
+  <div style="overflow-x:auto"><table class="stats"><thead><tr><th>옵션</th><th>확률</th>${TIER_N.map((n,i)=>`<th style="color:${TIER_COL[i]}">${n}</th>`).join('')}</tr></thead><tbody>
+  ${Object.entries(AUG).map(([k,a])=>`<tr><td><b>${a.n}</b><br><span class="sub">${sd[k]}</span></td><td>${pct(a.w/ws*100)}%</td>${a.v.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <p class="sub" style="margin:0">확률은 첫 줄 기준이며, 각성 두 번째 줄은 첫 줄과 겹치지 않게 뽑혀요.</p>`},
+relicOpen(r){return head(r.title)+`<div class="ropen"><div class="rchest">${itemSvg('relic')}</div><div class="rburst"></div>
+  <div class="rgrid">${r.list.map((k,i)=>`<div class="ritem g${RELICS[k].g}" style="animation-delay:${(0.75+i*Math.min(0.12,2.4/r.list.length)).toFixed(2)}s">${relicIcon(k,50)}<b style="color:${RG_COL[RELICS[k].g]}">${RELICS[k].n}</b><span class="sub">${RG_N[RELICS[k].g]} · Lv.${S.relics[k]}</span></div>`).join('')}</div></div>
+  <p class="sub" style="margin:0">${r.foot}</p><button class="btn pri" data-act="close">확인</button>`},
+backupConfirm(){return head('백업 불러오기')+`<p>지금 진행 상황이 백업 내용으로 바뀝니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="backupGo">불러오기</button><button class="btn" data-act="settings">취소</button></div>`},
 traitInfo(k){const t=TRAITS[k];return head(t.n)+`<p><span class="tier" style="color:${TG_COL[t.g]}">${TG_N[t.g]} 특성</span></p><p>${t.d}</p><button class="btn pri" data-act="close">확인</button>`},
 sellMon(uid){const m=monBy(uid);if(!m)return null;return head('포켓몬 판매')+`<p>${D(m.id).name} (Lv.${m.lv}, 특성 ${m.traits.map(k=>TRAITS[k].n).join('·')})를 ${fmt(monSellPrice(m))}골드에 판매할까요? 착용한 스킬은 가방으로 돌아갑니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="sellMonGo" data-uid="${uid}">판매</button><button class="btn" data-act="close">취소</button></div>`},
 reset(){return head('진행 초기화')+`<p>모든 포켓몬, 스킬, 재화가 사라지고 스타팅 선택부터 다시 시작합니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="resetGo">초기화</button><button class="btn" data-act="close">취소</button></div>`},
@@ -1138,12 +1281,89 @@ admin(){const it=Object.entries(ITEM_N);
    <div class="row"><button class="btn sm adm${UI.god?' on':''}" data-act="admGod">무적·즉사 모드 ${UI.god?'ON':'OFF'}</button>${[1,2,4,8].map(v=>`<button class="btn sm adm${S.speed===v?' on':''}" data-act="admSpeed" data-v="${v}">×${v}</button>`).join('')}<button class="btn sm adm" data-act="admOffline">오프라인 1시간 보상</button></div></div>
   <div class="adm-sec"><b>유물 · 상점 · 도감</b>
    <div class="row"><button class="btn sm adm" data-act="admRelicMax">유물 전부 Lv.10</button><button class="btn sm adm" data-act="admRelicFree">유물 무료 10회</button><button class="btn sm adm" data-act="admRelicReset">유물 초기화</button><button class="btn sm adm" data-act="admShopReset">상점 가격 초기화</button><button class="btn sm adm" data-act="admExpand">가방·보관함 최대</button><button class="btn sm adm" data-act="admDex">도감 전부 등록</button><button class="btn sm adm" data-act="admBadges">뱃지 전부</button><button class="btn sm adm" data-act="admBadgeReset">뱃지 초기화</button><button class="btn sm adm" data-act="admTestFriend">테스트 친구 추가</button></div></div>
+  <div class="adm-sec"><b>쿠폰 만들기</b><p class="sub" style="margin:0">만든 코드를 친구들에게 보내면 각자 설정 → 쿠폰에서 한 번씩 받을 수 있어요. 미리 정해둔 쿠폰: ${Object.keys(COUPONS).join(', ')}</p>
+   <div class="row"><label class="fld grow">골드<input id="cpGold" type="number" min="0" value="100000"></label><label class="fld grow">무료 유물 상자<input id="cpFree" type="number" min="0" value="0"></label></div>
+   <div class="row"><label class="fld grow">아이템<select id="cpItem"><option value="">없음</option>${Object.entries(ITEM_N).map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select></label><label class="fld" style="width:80px">개수<input id="cpItemN" type="number" min="1" value="5"></label></div>
+   <div class="row"><label class="fld grow">메시지<input id="cpMsg" maxlength="40" placeholder="예: 주말 이벤트 쿠폰"></label><label class="fld" style="width:96px">유효기간(일)<input id="cpDays" type="number" min="0" value="0"></label></div>
+   <div class="row"><button class="btn sm adm" data-act="admCoupon">쿠폰 코드 만들기</button><span class="sub">유효기간 0 = 무제한</span></div>
+   <textarea id="cpOut" class="code" rows="2" readonly placeholder="여기에 코드가 생성됩니다"></textarea></div>
   <div class="adm-sec"><b>데이터</b>
    <div class="row"><button class="btn sm adm" data-act="admSave">지금 저장</button><button class="btn sm warn" data-act="admResetAsk">게임 초기화</button><button class="btn sm" data-act="admLogout">관리자 로그아웃</button></div></div>`},
 admReset(){return head('게임 초기화')+`<p>모든 진행 상황이 지워지고 스타팅 선택부터 다시 시작합니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="resetGo">초기화</button><button class="btn" data-act="adminOpen">취소</button></div>`}
 };
 const monSellPrice=m=>Math.floor(50*rank(m.id)*m.lv*(1+S.stage*0.05)*(1+(m.traits.length-1)*0.5));
 function fillAdmMoves(){const t=$('#admSkT'),mm=$('#admSkM');if(!t||!mm)return;const cur=mm.value;mm.innerHTML=MOVES[t.value].map((a,i)=>`<option value="${i}">${a[0]}</option>`).join('');if(cur&&+cur<MOVES[t.value].length)mm.value=cur}
+
+/* ================= 사운드: 코드로 연주하는 오리지널 8비트 BGM + 효과음 ================= */
+const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10],dor:[0,2,3,5,7,9,10],har:[0,2,3,5,7,8,11],mix:[0,2,4,5,7,9,10],phr:[0,1,3,5,7,8,10]};
+// mel: 8분음표 단위. 숫자=음계 도수, .=앞 음 늘이기, -=쉼표
+const SONGS={
+ forest:{bpm:112,root:60,sc:'maj',prog:[0,4,5,3],lead:'square',drums:1,arp:1,mel:'4 . 2 4 5 4 2 0 1 . 2 4 2 . - - 0 2 4 7 6 . 4 . 5 4 2 1 2 . - -'},
+ moon:{bpm:80,root:57,sc:'dor',prog:[0,3,6,4],lead:'triangle',drums:0,arp:1,pad:1,mel:'- 4 . 6 7 . 6 4 3 . - 2 3 4 . - - 4 . 6 7 . 9 . 8 7 6 . 4 . - -'},
+ harbor:{bpm:100,root:62,sc:'maj',prog:[0,3,4,0],lead:'square',drums:1,arp:0,mel:'0 . 2 . 4 5 4 . 2 . 0 . 1 2 1 . 0 . 2 . 4 5 7 . 6 5 4 . 2 . - -'},
+ garden:{bpm:124,root:65,sc:'maj',prog:[0,5,3,4],lead:'square',drums:2,arp:1,mel:'4 5 7 . 5 4 2 . 4 2 0 . 2 . - - 4 5 7 9 7 5 4 . 5 4 2 1 0 . - -'},
+ tower:{bpm:70,root:57,sc:'har',prog:[0,0,3,4],lead:'triangle',drums:0,arp:1,pad:1,mel:'0 . - 1 0 . -1 . 0 . 4 . 3 . 1 . 0 . - 1 0 . 6 . 4 . 3 . 1 . 0 .'},
+ silph:{bpm:118,root:60,sc:'mix',prog:[0,6,3,0],lead:'square',drums:2,arp:0,mel:'0 0 - 2 4 - 2 0 6 . 4 . 2 - 0 - 0 0 - 2 4 - 6 7 6 4 2 . 0 . - -'},
+ ice:{bpm:92,root:64,sc:'min',prog:[0,5,2,6],lead:'sine',drums:0,arp:1,pad:1,mel:'7 . 4 . 2 . 4 . 6 . 4 . 3 . 2 . 7 . 9 . 7 . 4 . 3 . 2 . 0 . - -'},
+ plant:{bpm:128,root:52,sc:'phr',prog:[0,1,0,6],lead:'sawtooth',drums:2,arp:0,mel:'0 0 1 0 - 0 3 1 0 0 1 0 - 4 3 1 0 0 1 0 - 0 3 4 5 4 3 1 0 . - -'},
+ vroad:{bpm:116,root:55,sc:'min',prog:[0,5,6,4],lead:'square',drums:2,arp:1,mel:'0 . 2 3 4 . 3 2 3 . 2 0 2 . - - 0 . 2 3 4 . 6 7 6 . 4 . 3 . 4 .'},
+ plateau:{bpm:124,root:60,sc:'maj',prog:[0,3,4,0],lead:'square',drums:2,arp:1,mel:'0 . . 4 7 . 6 4 5 . 4 2 4 . - - 0 . . 4 7 . 9 . 8 7 6 4 7 . - -'},
+ mine:{bpm:96,root:50,sc:'min',prog:[0,5,3,4],lead:'triangle',drums:1,arp:0,mel:'0 - 2 - 3 - 2 - 4 . 3 2 0 . - - 0 - 2 - 3 - 4 - 6 . 4 3 2 . - -'},
+ battle:{bpm:152,root:57,sc:'min',prog:[0,0,5,6],lead:'square',drums:2,arp:0,run:1,mel:'0 0 7 0 6 0 4 3 0 0 7 0 6 . 7 . 3 3 8 3 7 3 6 4 3 . 4 . 6 . 7 .'},
+ legend:{bpm:140,root:55,sc:'har',prog:[0,5,3,4],lead:'sawtooth',drums:2,arp:1,run:1,mel:'0 . 3 . 7 . 6 . 4 . 3 . 1 . 0 . 0 . 3 . 7 . 9 . 8 . 7 . 6 . 4 .'}};
+const REGION_SONG=['forest','moon','harbor','garden','tower','silph','ice','plant','vroad','plateau'];
+Object.values(SONGS).forEach(s=>{s._m=s.mel.split(' ').map(t=>t==='.'||t==='-'?t:+t)});
+const AU={ctx:null,cur:null,step:0,nextT:0,timer:null,nb:null,last:{}};
+const mf=n=>440*Math.pow(2,(n-69)/12);
+function sdeg(s,d,oct){const sc=SC[s.sc];const o=Math.floor(d/7),i=((d%7)+7)%7;return s.root+sc[i]+12*(o+(oct||0))}
+function auInit(){if(AU.ctx)return true;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return false;AU.ctx=new C();AU.bgm=AU.ctx.createGain();AU.sfxG=AU.ctx.createGain();AU.bgm.connect(AU.ctx.destination);AU.sfxG.connect(AU.ctx.destination);
+  const len=AU.ctx.sampleRate*0.5;AU.nb=AU.ctx.createBuffer(1,len,AU.ctx.sampleRate);const d=AU.nb.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;auVol();return true}catch(e){AU.ctx=null;return false}}
+function auVol(){if(!AU.ctx||!S||!S.set)return;AU.bgm.gain.value=(S.set.bgm/100)*0.2;AU.sfxG.gain.value=(S.set.sfx/100)*0.32}
+function tone(f,t,d,type,g,dest,slide){const c=AU.ctx,o=c.createOscillator(),v=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
+  v.gain.setValueAtTime(0.0001,t);v.gain.linearRampToValueAtTime(g,t+0.01);v.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(v);v.connect(dest);o.start(t);o.stop(t+d+0.03)}
+function noise(t,d,g,dest,hp){const c=AU.ctx,s=c.createBufferSource();s.buffer=AU.nb;const v=c.createGain();let n=s;if(hp){const f=c.createBiquadFilter();f.type='highpass';f.frequency.value=hp;s.connect(f);n=f}
+  v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(0.0001,t+d);n.connect(v);v.connect(dest);s.start(t);s.stop(t+d+0.03)}
+function playStep(s,step,t){const sd=60/s.bpm/2,bar=Math.floor(step/8)%s.prog.length,cd=s.prog[bar],m=s._m,i=step%m.length,tok=m[i],B=AU.bgm;
+  if(typeof tok==='number'){let len=1;while(m[(i+len)%m.length]==='.'&&len<8)len++;const g=s.lead==='sawtooth'?0.07:s.lead==='square'?0.09:0.16;
+    tone(mf(sdeg(s,tok,0)),t,len*sd*0.92,s.lead,g,B);if(Math.floor(step/m.length)%2===1)tone(mf(sdeg(s,tok-2,0)),t,len*sd*0.9,'triangle',0.05,B)}
+  if(s.run)tone(mf(sdeg(s,cd,step%2?-1:-2)),t,sd*0.9,'triangle',0.2,B);else if(step%2===0)tone(mf(sdeg(s,cd,-2)),t,sd*1.8,'triangle',0.22,B);
+  if(s.arp){const ch=[cd,cd+2,cd+4,cd+2];tone(mf(sdeg(s,ch[step%4],-1)),t,sd*0.8,'sine',0.06,B)}
+  if(s.pad&&step%8===0)[cd,cd+2,cd+4].forEach(d=>tone(mf(sdeg(s,d,-1)),t,sd*7.5,'sine',0.035,B));
+  if(s.drums){if(step%4===0)tone(140,t,0.14,'sine',0.32,B,40);if(step%4===2)noise(t,0.11,0.16,B,1600);if(s.drums>1)noise(t,0.03,0.05,B,7000)}}
+function auSched(){if(!AU.ctx||!AU.cur)return;const s=SONGS[AU.cur];const sd=60/s.bpm/2;while(AU.nextT<AU.ctx.currentTime+0.25){playStep(s,AU.step,AU.nextT);AU.nextT+=sd;AU.step++}}
+function musicUpdate(){if(!AU.ctx||!S||!S.set)return;let want=null;if(S.set.bgm>0)want=R.legend?'legend':R.boss?'battle':S.mine?'mine':REGION_SONG[Math.floor((S.stage-1)/10)%10];
+  if(want===AU.cur)return;AU.cur=want;AU.step=0;AU.nextT=AU.ctx.currentTime+0.12;if(want&&!AU.timer)AU.timer=setInterval(auSched,40);if(!want&&AU.timer){clearInterval(AU.timer);AU.timer=null}}
+function auUnlock(){if(!S)return;if(auInit()){if(AU.ctx.state==='suspended')AU.ctx.resume();musicUpdate()}}
+const SFX_F={N:520,F:392,W:330,G:440,E:880,I:988,C:262,P:294,D:196,A:660,S:740,B:587,R:220,H:247,X:349};
+function sfx(k,type){if(!AU.ctx||!S||!S.set||S.set.sfx<=0||document.hidden)return;const now=AU.ctx.currentTime;if(AU.last[k]&&now-AU.last[k]<(k==='skill'?0.09:0.15))return;AU.last[k]=now;const t=now+0.01,G=AU.sfxG;
+  if(k==='skill'){const f=SFX_F[type]||520;tone(f,t,0.12,'square',0.12,G,f*1.5);if(type==='E')noise(t,0.08,0.08,G,4000)}
+  else if(k==='crit'){tone(1320,t,0.08,'square',0.12,G);tone(1760,t+0.05,0.1,'square',0.1,G)}
+  else if(k==='hit')noise(t,0.05,0.08,G,2500);
+  else if(k==='buff')[0,4,7].forEach((n,i)=>tone(mf(72+n),t+i*0.05,0.15,'triangle',0.12,G));
+  else if(k==='win')[0,4,7,12,7,12].forEach((n,i)=>tone(mf(72+n),t+i*0.1,i===5?0.5:0.12,'square',0.1,G));
+  else if(k==='lose')[7,5,3,0].forEach((n,i)=>tone(mf(64+n),t+i*0.14,0.2,'triangle',0.14,G));
+  else if(k==='lvl')[0,4,7,12].forEach((n,i)=>tone(mf(76+n),t+i*0.06,0.12,'square',0.08,G));
+  else if(k==='cap'){[0,7,12].forEach((n,i)=>tone(mf(67+n),t+i*0.12,0.18,'square',0.1,G));tone(mf(79),t+0.4,0.4,'triangle',0.12,G)}
+  else if(k==='evo')[0,2,4,7,9,12,16].forEach((n,i)=>tone(mf(67+n),t+i*0.07,0.16,'triangle',0.12,G));
+  else if(k==='relic'){noise(t,0.3,0.06,G,3000);[0,7,12,19].forEach((n,i)=>tone(mf(79+n),t+0.55+i*0.06,0.25,'sine',0.12,G))}
+  else if(k==='coin')[0,7].forEach((n,i)=>tone(mf(84+n),t+i*0.07,0.12,'square',0.08,G))}
+document.addEventListener('pointerdown',auUnlock,{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!AU.ctx)return;if(document.hidden)AU.ctx.suspend();else if(S&&S.set&&(S.set.bgm>0||S.set.sfx>0))AU.ctx.resume()});
+
+/* ================= 쿠폰 ================= */
+const COUPON_SALT='pks-0522-cpn';
+const COUPONS={POKESTORY:{g:50000,i:{cube:3,capsule:2},f:3,msg:'포켓몬스토리 오픈 기념 쿠폰'}};
+function fnv(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
+function makeCoupon(r){const body={id:Math.random().toString(36).slice(2,9),...r};const b=btoa(unescape(encodeURIComponent(JSON.stringify(body)))).replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_');return`PSC.${b}.${fnv(b+COUPON_SALT)}`}
+function redeemCoupon(raw){S.coupons=S.coupons||{};const up=raw.toUpperCase();
+  if(COUPONS[up]){if(S.coupons['P:'+up])return{err:'이미 사용한 쿠폰이에요'};const c=COUPONS[up];S.coupons['P:'+up]=1;const reward={};if(c.g)reward.gold=c.g;Object.assign(reward,c.i||{});if(c.f)reward.free=c.f;return{reward,msg:c.msg}}
+  const parts=raw.split('.');if(parts.length!==3||parts[0]!=='PSC')return{err:'쿠폰 코드가 올바르지 않아요'};
+  if(fnv(parts[1]+COUPON_SALT)!==parts[2])return{err:'쿠폰 코드가 올바르지 않아요'};
+  let o;try{o=JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')))))}catch(e){return{err:'쿠폰 코드가 올바르지 않아요'}}
+  if(!o.id||S.coupons[o.id])return{err:'이미 사용한 쿠폰이에요'};if(o.e&&Date.now()>o.e)return{err:'기간이 끝난 쿠폰이에요'};
+  const num=(v,mx)=>Number.isFinite(+v)?clamp(Math.floor(+v),0,mx):0;const reward={};if(o.g)reward.gold=num(o.g,1e12);if(o.f)reward.free=num(o.f,999);
+  for(const k in (o.i||{}))if(ITEM_N[k])reward[k]=num(o.i[k],99999);S.coupons[o.id]=1;return{reward,msg:typeof o.m==='string'?o.m.slice(0,40):''}}
+function applyBright(){const el=document.getElementById('dim');if(!el||!S||!S.set)return;const v=S.set.bright/100;el.style.backdropFilter=el.style.webkitBackdropFilter=v===1?'none':`brightness(${v})`}
 
 /* ================= 친구 코드 ================= */
 function myTeam(){return partyMons().slice(0,3).map(m=>({i:m.id,k:m.nick||undefined,l:m.lv,v:m.iv.slice(),t:m.traits.slice(),s:m.skills.map(skBy).filter(Boolean).map(s=>[s.t,s.m,s.g,s.sc,s.st,s.pot?[s.pot.tier,s.pot.lines]:0,s.add?[s.add.tier,s.add.lines]:0])}))}
@@ -1261,6 +1481,9 @@ admTestFriend(){const ids=DEX.filter(p=>!LEGEND.includes(p.id)&&!p.evo.length).m
   S.friends.push({id:'test'+Date.now(),name:'테스트 트레이너',badges:3,max:S.maxStage,team,w:0,l:0});admDone('테스트 친구를 추가했어요 (친구 탭)')},
 admKps(){S.kps=Math.max(S.kps,1);admDone('오프라인 기준 처치 속도를 초당 1마리로')},
 admSave(){save();admDone('저장했어요')},
+admCoupon(){const g=Math.max(0,+$('#cpGold').value||0),f=Math.max(0,+$('#cpFree').value||0),it=$('#cpItem').value,itn=Math.max(1,+$('#cpItemN').value||1),days=Math.max(0,+$('#cpDays').value||0),msg=($('#cpMsg').value||'').slice(0,40);
+  const r={};if(g)r.g=g;if(f)r.f=f;if(it)r.i={[it]:itn};if(msg)r.m=msg;if(days)r.e=Date.now()+days*864e5;if(!g&&!f&&!it){toast('보상을 하나 이상 넣어 주세요','bad');return}
+  const code=makeCoupon(r);const out=$('#cpOut');out.value=code;try{navigator.clipboard.writeText(code).then(()=>toast('쿠폰 코드를 만들고 복사했어요','gold'),()=>{out.focus();out.select()})}catch(e){out.focus();out.select()}},
 admResetAsk(){openModal('admReset')},
 admLogout(){UI.admin=false;UI.god=false;closeModal();toast('관리자 로그아웃')},
 admMonLv(d){const m=monBy(+d.uid);if(!m)return;setLevel(m,+d.v===99?99:m.lv+10);admDone(`${D(m.id).name} Lv.${m.lv}`)},
@@ -1327,14 +1550,14 @@ treroll(d){const m=monBy(+d.uid);if(!m)return;const n=m.traits.length;const lock
   if(S.items.capsule<cost||!locks.some(x=>!x))return;S.items.capsule-=cost;(S.tutF=S.tutF||{}).trait=true;
   const keep=m.traits.filter((k,i)=>locks[i]);m.traits=m.traits.map((k,i)=>{if(locks[i])return k;const nk=rollTrait(keep);keep.push(nk);return nk});
   const best=Math.max(...m.traits.map(k=>TRAITS[k].g));if(best>=2)toast(`<b style="color:${TG_COL[best]}">${TG_N[best]}</b> 특성 획득!`,'gold');renderModal()},
-relicDraw(d){const n=d.n==='10'?10:1;const res={};let spent=0;
-  for(let i=0;i<n;i++){if(relicsAllMax())break;const pr=relicPrice();if(S.gold<pr)break;S.gold-=pr;spent+=pr;S.shop.relic=(S.shop.relic||0)+1;const k=drawRelic();if(k)res[k]=(res[k]||0)+1}
+relicDraw(d){const n=d.n==='10'?10:1;const res={},list=[];let spent=0;
+  for(let i=0;i<n;i++){if(relicsAllMax())break;const pr=relicPrice();if(S.gold<pr)break;S.gold-=pr;spent+=pr;S.shop.relic=(S.shop.relic||0)+1;const k=drawRelic();if(k){res[k]=(res[k]||0)+1;list.push(k)}}
   if(!spent)return;(S.tutF=S.tutF||{}).buy=true;refreshBonus();const best=Math.max(...Object.keys(res).map(k=>RELICS[k].g));
   if(best>=2)toast(`<b style="color:${RG_COL[best]}">${RG_N[best]}</b> 유물 획득!`,'gold');
-  openModal('result',{title:'유물 상자',body:Object.entries(res).map(([k,c])=>`<b style="color:${RG_COL[RELICS[k].g]}">[${RG_N[RELICS[k].g]}] ${RELICS[k].n}</b> +${c} → Lv.${S.relics[k]}`).join('<br>')+`<br><span class="sub">사용 ${fmt(spent)}골드 · 다음 상자 ${fmt(relicPrice())}골드</span>`})},
-relicFree(d){const n=d.n==='all'?S.freeRelic:1;const res={};for(let i=0;i<n&&S.freeRelic>0;i++){if(relicsAllMax())break;S.freeRelic--;const k=drawRelic();if(k)res[k]=(res[k]||0)+1}
+  sfx('relic');openModal('relicOpen',{title:'유물 상자',list,foot:`사용 ${fmt(spent)}골드 · 다음 상자 ${fmt(relicPrice())}골드`})},
+relicFree(d){const n=d.n==='all'?S.freeRelic:1;const res={},list=[];for(let i=0;i<n&&S.freeRelic>0;i++){if(relicsAllMax())break;S.freeRelic--;const k=drawRelic();if(k){res[k]=(res[k]||0)+1;list.push(k)}}
   if(!Object.keys(res).length)return;refreshBonus();const best=Math.max(...Object.keys(res).map(k=>RELICS[k].g));if(best>=2)toast(`<b style="color:${RG_COL[best]}">${RG_N[best]}</b> 유물 획득!`,'gold');
-  openModal('result',{title:'무료 유물 상자',body:Object.entries(res).map(([k,c])=>`<b style="color:${RG_COL[RELICS[k].g]}">[${RG_N[RELICS[k].g]}] ${RELICS[k].n}</b> +${c} → Lv.${S.relics[k]}`).join('<br>')+`<br><span class="sub">남은 무료 상자 ${S.freeRelic}개</span>`})},
+  sfx('relic');openModal('relicOpen',{title:'무료 유물 상자',list,foot:`남은 무료 상자 ${S.freeRelic}개`})},
 buyBag(){if(S.bagMax>=BAG_CAP)return;const pr=shopPrice('bag');if(S.gold<pr)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.shop.bag=(S.shop.bag||0)+1;S.bagMax=Math.min(BAG_CAP,S.bagMax+5);toast(`스킬 가방 ${S.bagMax}칸`,'gold');renderPanel()},
 buyBox(){if(S.boxMax>=BOX_CAP)return;const pr=shopPrice('box');if(S.gold<pr)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.shop.box=(S.shop.box||0)+1;S.boxMax=Math.min(BOX_CAP,S.boxMax+1);toast(`보관함 ${S.boxMax}칸`,'gold');renderPanel()},
 buyItem(d){const k=d.k;let pr;if(k==='candy')pr=candyPrice();else if(STONES[k])pr=stonePrice();else pr=cubePrice()*(k==='acube'?4:k==='capsule'?2:1);
@@ -1346,6 +1569,21 @@ buySkillBox(){const pr=skillBoxPrice();if(S.gold<pr||S.bag.length>=S.bagMax)retu
   if(s)toast(`<b style="color:${GRADE_COL[s.g]}">${s.g}등급</b> ${T[s.t]} 「${MV(s).name}」 획득`,'gold');renderPanel()},
 useCandy(d){const m=monBy(+d.uid);if(!m)return;let n=0;do{if(!S.items.candy||m.lv>=LV_MAX)break;S.items.candy--;m.lv++;m.exp=0;n++;checkEvo(m)}while(d.all);if(R.rt[m.uid])syncMax(m);R.pver++;if(n)toast(`${D(m.id).name} Lv.${m.lv} (사탕 ${n}개)`,'gold');renderModal()},
 inv(){openModal('inv')},
+settings(){openModal('settings')},
+setRange(d,el){const k=d.k,v=+el.value;S.set[k]=v;const lab=document.getElementById('v'+k);if(lab)lab.textContent=v;if(k==='bright')applyBright();else{auInit();auVol();if(k==='bgm')musicUpdate();if(k==='sfx'&&AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume()}},
+setToggle(d){S.set[d.k]=!S.set[d.k];renderModal()},
+setFx(d){S.set.fx=d.v;renderModal()},
+traitList(){openModal('traitList')},
+augList(){openModal('augList')},
+coupon(){const raw=(($('#couponIn')||{}).value||'').trim();if(!raw){toast('쿠폰 코드를 입력해 주세요','bad');return}
+  const r=redeemCoupon(raw);if(r.err){toast(r.err,'bad');return}tutGive(r.reward);sfx('coin');$('#couponIn').value='';log(`쿠폰 사용: ${tutRewardText(r.reward)}`);
+  openModal('result',{title:'쿠폰 사용 완료!',body:`${r.msg?esc(r.msg)+'<br>':''}<b>${tutRewardText(r.reward)}</b>를 받았어요.`})},
+backupCopy(){const code='PSB1.'+btoa(unescape(encodeURIComponent(JSON.stringify(S))));const done=()=>toast('백업 코드를 복사했어요. 메모장이나 카톡 나에게 보내기에 저장해 두세요.','gold');
+  const fb=()=>{const ta=$('#backupIn');if(ta){ta.value=code;ta.focus();ta.select()}toast('아래 칸의 코드를 길게 눌러 복사해 주세요')};
+  try{navigator.clipboard.writeText(code).then(done,fb)}catch(e){fb()}},
+backupAsk(){const v=(($('#backupIn')||{}).value||'').replace(/\s/g,'');try{if(!v.startsWith('PSB1.'))throw 0;const o=JSON.parse(decodeURIComponent(escape(atob(v.slice(5)))));if(!o||!Array.isArray(o.party)||!o.party.length||!Array.isArray(o.mons))throw 0;UI.pendingBackup=o;openModal('backupConfirm')}catch(e){toast('백업 코드를 읽을 수 없어요. 전체를 정확히 붙여넣었는지 확인해 주세요.','bad')}},
+backupGo(){if(!UI.pendingBackup)return;try{localStorage.setItem(KEY,JSON.stringify(UI.pendingBackup))}catch(e){toast('저장 공간에 쓸 수 없어요','bad');return}S=null;location.reload()},
+
 tut(){if(!S.tutDone)openModal('tut')},
 tutClaim(){if(S.tutDone)return;const s=TUT[S.tut];if(!s.chk())return;tutGive(s.r);toast(`튜토리얼 보상: ${tutRewardText(s.r)}`,'gold');
   if(S.tut>=TUT.length-1){S.tutDone=true;closeModal();openModal('result',{title:'튜토리얼 완료!',body:'모든 단계를 마쳤어요. 이제 본격적으로 모험을 즐겨 보세요!'});return}S.tut++;renderModal();renderHeader()},
@@ -1386,11 +1624,13 @@ starter(d){if(S)S.seenPatch=GAME_VERSION;const nm=(($('#pname')||{}).value||'').
   const s=makeSkill(st[1],2,MOVES[st[1]].findIndex(x=>x[0]===st[2]));s.isNew=false;S.bag.push(s);m.skills[0]=s.uid;s.eq=m.uid;
   const s2=makeSkill('N',2,0);s2.isNew=false;S.bag.push(s2);m.skills[1]=s2.uid;s2.eq=m.uid;S.freeRelic=20;S.tut=0;S.tutDone=false;S.tutF={};
   S.gold=30000;setTimeout(()=>openModal('result',{title:'모험을 시작합니다!',body:`${itemIcon('gold',28)} 스타팅 축하금 <b>30,000골드</b>와 ${itemIcon('relic',24)} <b>유물 상자 20개</b>를 받았어요. 골드 옆 <b>튜토리얼</b> 버튼을 눌러 하나씩 따라가 보세요!`}),300);
+  applyBright();auUnlock();
   log(`트레이너 <b>${esc(nm)}</b>, <b>${D(st[0]).name}</b>와 모험을 시작했다! (특성: ${TRAITS[st[3]].n})`);$('#starter').hidden=true;resetBattle();renderPanel();save()}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||b.tagName==='INPUT')return;const k=b.dataset.act;
   if(ADM[k]){if(admOk())ADM[k](b.dataset,b);return}const f=ACT[k];if(f)f(b.dataset,b)});
-document.addEventListener('change',e=>{if(e.target.id==='admSkT'){fillAdmMoves();return}const b=e.target.closest('input[data-act],select[data-act]');if(b&&ACT[b.dataset.act])ACT[b.dataset.act](b.dataset,b)});
+document.addEventListener('input',e=>{const b=e.target.closest('input[type=range][data-act]');if(b&&ACT[b.dataset.act])ACT[b.dataset.act](b.dataset,b)});
+document.addEventListener('change',e=>{if(e.target.type==='range')return;if(e.target.id==='admSkT'){fillAdmMoves();return}const b=e.target.closest('input[data-act],select[data-act]');if(b&&ACT[b.dataset.act])ACT[b.dataset.act](b.dataset,b)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='admPw')ACT.adminLogin();if(e.key==='Enter'&&e.target.id==='nickIn'){const b=document.querySelector('[data-act="nickGo"]');if(b)ACT.nickGo(b.dataset)}if(e.key==='Enter'&&e.target.id==='newName')ACT.renameGo();if(e.key==='Escape'&&UI.modal)closeModal()});
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 
@@ -1408,10 +1648,10 @@ function offlineReward(sec){if(!S||!S.party.length)return;sec=Math.min(sec,offMa
   const h=Math.floor(sec/3600),mi=Math.floor(sec%3600/60);openModal('offline',{time:`${h?h+'시간 ':''}${mi}분`,gold,xp,skills:n,caps,mons,eff})}
 function checkUpdate(){if(!window.__BUILD_ID||!S)return;fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(v=>{if(v&&v.build&&v.build!==window.__BUILD_ID){save();toast('새 버전을 받는 중… 진행 상황은 그대로 유지돼요','gold');setTimeout(()=>location.reload(),1500)}}).catch(()=>{})}
 
-function boot(){
+function boot(){setTimeout(()=>{if(S){applyBright();auUnlock()}},0);
   $('#ver').textContent=`v${GAME_VERSION}`;cvInit();preloadSprites();
   const saved=load();
-  if(saved&&saved.party&&saved.party.length){S=saved;S.ver=GAME_VERSION;S.items=Object.assign(newState().items,S.items);const base=newState();if(S.freeRelic===undefined)S.freeRelic=0;if(S.tut===undefined){S.tut=0;S.tutDone=S.maxStage>10;S.tutF={}}for(const k of['seen','friends','pvp','badges','name','pid','starter','autoSynth','sellG','kps'])if(S[k]===undefined)S[k]=base[k];if(S.starter===4&&S.mons[0])S.starter=[1,4,7].includes(S.mons[0].id)?S.mons[0].id:4;
+  if(saved&&saved.party&&saved.party.length){S=saved;S.ver=GAME_VERSION;S.items=Object.assign(newState().items,S.items);const base=newState();if(S.freeRelic===undefined)S.freeRelic=0;S.set=Object.assign({bgm:60,sfx:70,bright:100,fx:'high',dmgNum:true,shake:true},S.set||{});S.coupons=S.coupons||{};if(S.tut===undefined){S.tut=0;S.tutDone=S.maxStage>10;S.tutF={}}for(const k of['seen','friends','pvp','badges','name','pid','starter','autoSynth','sellG','kps'])if(S[k]===undefined)S[k]=base[k];if(S.starter===4&&S.mons[0])S.starter=[1,4,7].includes(S.mons[0].id)?S.mons[0].id:4;
     S.caught=S.caught||{};S.shop=S.shop||{};S.bagMax=S.bagMax||BAG_BASE;S.boxMax=S.boxMax||BOX_BASE;delete S.items.chest;for(const k in S.relics)if(!RELICS[k])delete S.relics[k];refreshBonus();resetBattle();renderPanel();offlineReward((Date.now()-(S.last||Date.now()))/1000);if(S.seenPatch!==GAME_VERSION){S.seenPatch=GAME_VERSION;if(!UI.modal)openModal('patch')}}
   else showStarter();
   let last=performance.now();
