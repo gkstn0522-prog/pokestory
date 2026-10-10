@@ -30,7 +30,13 @@ small{color:var(--muted);font-weight:400}
 .prog.boss>i{background:var(--bad)}
 .prog.mine>i{background:#8fb3ff}
 .res{display:flex;flex-wrap:wrap;gap:5px}
-.invbtn{display:flex;align-items:center;gap:8px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;font-size:13px;font-variant-numeric:tabular-nums}
+.tutbtn{flex:none;background:var(--panel2);border:1px solid var(--accent);color:var(--accent);border-radius:10px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer;animation:tutPulse 1.4s ease-in-out infinite;white-space:nowrap}
+.tutbtn.ready{background:var(--accent);color:var(--accent-ink)}
+@keyframes tutPulse{0%,100%{box-shadow:0 0 0 0 rgba(242,184,75,.55)}50%{box-shadow:0 0 0 6px rgba(242,184,75,0)}}
+@media (prefers-reduced-motion:reduce){.tutbtn{animation:none}}
+.res{flex-wrap:nowrap}
+.tut-step{display:flex;gap:4px}.tut-step i{flex:1;height:5px;border-radius:3px;background:var(--panel2)}.tut-step i.on{background:var(--accent)}
+.invbtn{display:flex;align-items:center;gap:8px;flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;font-size:13px;font-variant-numeric:tabular-nums}
 .invbtn b{color:var(--accent);font-weight:600}
 .invbtn span:last-child{margin-left:auto;color:var(--muted);font-size:12px}
 .shop-row{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:10px}
@@ -267,8 +273,9 @@ textarea.code{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--
 
 <script>
 'use strict';
-const GAME_VERSION='1.0.8';
+const GAME_VERSION='1.0.9';
 const PATCH_NOTES=[
+ {v:'1.0.9',d:'2026-10-10',items:['튜토리얼 추가: 골드 옆 튜토리얼 버튼을 눌러 단계별로 진행하고 보상을 받으세요 (1-10 클리어 시 종료)','스타팅 포켓몬 개체값 S등급, 시작 스킬 2등급 2개','처음 시작 시 무료 유물 상자 20개','레전드리 유물은 4-10 클리어 후 등장 (그 전엔 에픽 확률 5%)']},
  {v:'1.0.8',d:'2026-10-10',items:['노말 스킬은 모든 포켓몬이 착용할 수 있어요 (노말 타입 포켓몬이 쓰면 위력 +10%)','유물 상자 가격 상한 50만 골드','처음 시작하면 유물 상자 10개 무료 지급','스타팅 포켓몬: 개체값 A등급, 특성 2개, 시작 스킬 2개(타입 스킬 + 노말 스킬)','스타팅 선택 화면에 추천 포켓몬(파이리) 표시','버그 수정: 근거리 포켓몬이 뒤쪽의 원거리 적에게 닿지 못해 공격하지 못하던 문제']},
  {v:'1.0.7',d:'2026-10-10',items:['패치노트를 볼 수 있어요 (트레이너 탭)','포켓몬 별명 기능: 능력치 화면에서 "귀요미(이상해씨)"처럼 이름을 붙일 수 있어요','전설의 포켓몬이 더 이상 일반 스테이지와 알에서 나오지 않습니다','포켓몬 알 가격: 5만 골드부터 1만씩 오르고 최대 25만 골드','6등급 이상 스킬의 주문서·숙련 비용이 등급마다 2배로 증가','밸런스 조정: 모든 스킬 위력 50%로 하향, 스킬 드랍 확률 20% 하향','안내 메시지가 화면 위쪽에 표시됩니다']}];
 const ADMIN_PW='0522';
@@ -467,6 +474,21 @@ function itemSvg(k){const c=ITEM_COL[k]||'#ccc';if(k==='gold')return`<svg viewBo
   return`<svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="11" fill="${c}" fill-opacity=".35"/><circle cx="16" cy="17" r="8.5" fill="${c}"/><circle cx="13" cy="14" r="3" fill="#fff" fill-opacity=".6"/><path d="M23 4l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#fff"/></svg>`}
 function itemIcon(k,sz){sz=sz||36;const spr=ITEM_SPR[k];return`<span class="iico" style="--isz:${sz}px">${spr?`<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${spr}.png" alt="" onerror="this.outerHTML=ITEM_FB('${k}')">`:itemSvg(k)}</span>`}
 const ITEM_FB=k=>itemSvg(k);
+const TUT=[
+ {t:'환영합니다!',d:'포켓몬은 자동으로 싸워요. 적을 10마리 쓰러뜨리면 보스가 나오고, 이기면 다음 스테이지로 갑니다. 1번 포켓몬은 앞에서 싸우는 근거리, 2·3번은 뒤에서 공격하는 원거리예요.',chk:()=>true,r:{gold:5000}},
+ {t:'유물 상자 열기',d:'유물 탭에서 무료 유물 상자를 열어 보세요. 유물은 파티 전체를 강하게 만들어 줘요.',go:'relic',chk:()=>relicCount()>0,r:{gold:5000}},
+ {t:'스킬 강화: 주문서',d:'스킬 탭에서 스킬을 눌러 주문서 강화를 1번 해 보세요. 스킬 데미지가 올라가요.',go:'skills',chk:()=>S.bag.some(s=>s.sc>0),r:{gold:10000}},
+ {t:'스킬 강화: 숙련',d:'같은 화면에서 숙련을 1번 해 보세요. 스킬 쿨타임이 줄어들어요.',go:'skills',chk:()=>S.bag.some(s=>s.st>0),r:{cube:2}},
+ {t:'스킬 각성',d:'각성의 구슬로 스킬의 각성을 개방해 보세요. 단일기가 광역기가 되는 등 스킬의 성질이 바뀌어요.',go:'skills',chk:()=>S.bag.some(s=>s.pot),r:{acube:1,gold:10000}},
+ {t:'자동 합성 켜기',d:'스킬 탭에서 자동 합성을 켜두면 같은 등급 스킬이 10개 모일 때마다 다음 등급으로 자동 합성돼요.',go:'skills',chk:()=>!!S.autoSynth,r:{gold:10000}},
+ {t:'상점 이용하기',d:'상점에서 아무 물건이나 1개 사 보세요. 가방 확장, 이상한사탕, 강화 재료 등이 있어요.',go:'shop',chk:()=>!!(S.tutF&&S.tutF.buy),r:{capsule:2}},
+ {t:'특성 재설정',d:'파티 탭에서 "능력치·특성"을 눌러 특성결정으로 특성을 한 번 재설정해 보세요.',go:'party',chk:()=>!!(S.tutF&&S.tutF.trait),r:{gold:20000}},
+ {t:'1-5까지 가기',d:'계속 싸워서 스테이지 1-5까지 가 보세요. 막히면 "반복"을 켜고 같은 스테이지에서 키우면 돼요.',chk:()=>S.maxStage>=5,r:{candy:3}},
+ {t:'관장 웅 이기기',d:'1-10에서 회색시티 체육관 관장 웅을 이기면 튜토리얼 완료! 웅은 바위 타입이라 물·풀·격투·땅 기술이 잘 통해요.',chk:()=>S.maxStage>10,r:{gold:50000,cube:3,free:5}}];
+function tutRewardText(r){return Object.entries(r).map(([k,v])=>k==='gold'?`${fmt(v)}골드`:k==='free'?`무료 유물 상자 ${v}개`:`${ITEM_N[k]} ${v}개`).join(', ')}
+function tutGive(r){for(const k in r){if(k==='gold')S.gold+=r[k];else if(k==='free')S.freeRelic=(S.freeRelic||0)+r[k];else S.items[k]=(S.items[k]||0)+r[k]}}
+function tutFinish(){if(S.tutDone)return;const left={};for(let i=S.tut;i<TUT.length;i++)for(const k in TUT[i].r)left[k]=(left[k]||0)+TUT[i].r[k];tutGive(left);S.tutDone=true;
+  log('튜토리얼 완료');setTimeout(()=>openModal('result',{title:'튜토리얼 완료!',body:`관장 웅을 이기고 튜토리얼을 마쳤어요. 남은 보상을 모두 드립니다:<br><b>${tutRewardText(left)}</b>`}),600)}
 const ITEM_N={cube:'각성의 구슬',acube:'공명의 구슬',capsule:'특성결정',candy:'이상한사탕',t:'번개의돌',f:'불꽃의돌',w:'물의돌',l:'리프의돌',m:'달의돌'};
 
 /* ================= 유틸 ================= */
@@ -600,6 +622,8 @@ function bossWin(){const gym=R.gym;const cur=S.stage;const lgWon=R.legend;R.lege
     if(first)openModal('result',{title:`${g.badge} 획득!`,body:`${g.title} ${g.leader}에게 이겼다! 뱃지 ${S.badges.filter(Boolean).length}/10${gym===9?'<br><b>포켓몬리그 챔피언이 되었습니다!</b>':''}`})}
   else log(`<b>${stageLabel(cur)}</b> 클리어${S.repeat?' (반복)':''}`);
   if(slotsFor(S.maxStage)>before){toast(`파티 슬롯 해금! 이제 포켓몬 ${slotsFor(S.maxStage)}마리로 싸울 수 있어요.`,'gold');log('파티 슬롯 해금')}
+  if(wasMax<=40&&S.maxStage>40){toast('레전드리 유물이 상자에 등장하기 시작했어요!','gold');log('레전드리 유물 개방')}
+  if(wasMax<=10&&S.maxStage>10)tutFinish();
   if(wasMax<=30&&S.maxStage>30){toast('광산이 열렸어요! 진화의 돌을 파밍할 수 있습니다.','gold');log('광산 개방')}
   R.pver++;if(S.stage!==cur&&(S.stage-1)%10===0)toast(`「${REG().name}」 도착!`);UI.dirty=true}
 
@@ -767,9 +791,11 @@ const eggPrice=()=>Math.min(250000,50000+10000*(S.shop.egg||0));
 const stonePrice=()=>200000+100000*(S.shop.stone||0);
 const skillBoxPrice=()=>Math.floor(cubePrice()*0.6);
 const relicCount=()=>Object.keys(RELICS).reduce((a,k)=>a+(S.relics[k]||0),0);
-const relicsAllMax=()=>relicCount()>=Object.keys(RELICS).length*RELIC_MAX;
+const legendRelicOpen=()=>S.maxStage>40;
+const gradeAvail=g=>!gradeFull(g)&&(g<3||legendRelicOpen());
+const relicsAllMax=()=>![0,1,2,3].some(gradeAvail);
 const gradeFull=g=>Object.keys(RELICS).filter(k=>RELICS[k].g===g).every(k=>(S.relics[k]||0)>=RELIC_MAX);
-function relicWeights(){const w=RG_W.slice();for(let g=0;g<4;g++){if(!gradeFull(g))continue;let t=-1;for(let x=g+1;x<4;x++)if(!gradeFull(x)){t=x;break}if(t<0)for(let x=g-1;x>=0;x--)if(!gradeFull(x)){t=x;break}if(t>=0)w[t]+=w[g];w[g]=0}return w}
+function relicWeights(){const w=RG_W.slice();for(let g=0;g<4;g++){if(gradeAvail(g))continue;let t=-1;for(let x=g+1;x<4;x++)if(gradeAvail(x)){t=x;break}if(t<0)for(let x=g-1;x>=0;x--)if(gradeAvail(x)){t=x;break}if(t>=0)w[t]+=w[g];w[g]=0}return w}
 function drawRelic(){if(relicsAllMax())return null;const w=relicWeights();const g=+wpick({0:w[0],1:w[1],2:w[2],3:w[3]});
   const ks=Object.keys(RELICS).filter(k=>RELICS[k].g===g&&(S.relics[k]||0)<RELIC_MAX);if(!ks.length)return null;const k=pick(ks);S.relics[k]=(S.relics[k]||0)+1;log(`유물 <b>${RELICS[k].n}</b> Lv.${S.relics[k]} (${RG_N[g]})`);return k}
 function rollAug(ex){const w={};for(const k in AUG)if(!ex||!ex.includes(k))w[k]=AUG[k].w;return wpick(w)}
@@ -902,7 +928,8 @@ function renderHeader(){
   const pg=$('#prog');pg.className='prog'+(R.boss?' boss':S.mine?' mine':'');
   let w,l;if(R.boss){w=R.bossT/R.bossMax;l=`보스 ${Math.max(0,R.bossT).toFixed(1)}초`}else if(S.mine){w=1;l='파밍 중'}else{w=S.kills/GOAL;l=`처치 ${S.kills}/${GOAL}`}
   pg.firstChild.style.width=(w*100)+'%';$('#progLabel').textContent=`${l} · ${fmtTime(R.stageT||0)}${S.best&&S.best[S.stage]?` (최고 ${fmtTime(S.best[S.stage])})`:''}${S.speed>1?` · ×${S.speed}`:''}`;
-  if(!$('#invGold'))$('#res').innerHTML=`<button class="invbtn" data-act="inv">${itemIcon('gold',20)}<span>골드 <b id="invGold"></b></span><span>인벤토리 열기 ›</span></button>`;
+  if(!$('#invGold'))$('#res').innerHTML=`<button class="invbtn" data-act="inv">${itemIcon('gold',20)}<span>골드 <b id="invGold"></b></span><span>인벤토리 ›</span></button><button class="tutbtn" id="tutBtn" data-act="tut" hidden>튜토리얼</button>`;
+  {const tb=document.getElementById('tutBtn');if(tb){if(S.tutDone)tb.hidden=true;else{tb.hidden=false;const lbl=`튜토리얼 ${S.tut+1}/${TUT.length}${TUT[S.tut].chk()?' · 보상!':''}`;if(tb.textContent!==lbl)tb.textContent=lbl;tb.classList.toggle('ready',TUT[S.tut].chk())}}}
   const ig=document.getElementById('invGold');if(ig&&ig.textContent!==fmt(S.gold))ig.textContent=fmt(S.gold);
   const bb=$('#bBoss');bb.textContent=R.boss?'보스전 진행 중':S.autoBoss?'자동 진행 ON':'자동 진행 OFF';bb.classList.toggle('on',S.autoBoss&&!R.boss);
   $('#bMine').classList.toggle('on',S.mine);$('#bMine').textContent=S.maxStage>30?'광산 파밍':'광산 (3-10 후)';
@@ -950,7 +977,7 @@ box(){const caught=Object.keys(S.caught).length;return`<div class="card"><div cl
 relic(){const w=relicWeights();const tot=w.reduce((a,x)=>a+x,0)||1;
   return`<div class="card"><div class="row"><h3 class="grow">유물</h3><span class="sub">보유 ${relicCount()}/${Object.keys(RELICS).length*RELIC_MAX}</span></div>
   <p class="sub" style="margin:0">골드로 유물 상자를 사서 엽니다. 무작위 유물 하나의 레벨이 1 오르고(최대 10), 파티 전체에 적용됩니다. 상자 가격은 처음 1만 골드이고 살 때마다 1만씩 올라 최대 50만 골드입니다. 한 등급을 전부 모으면 그 등급의 확률은 다음 등급으로 넘어갑니다.</p>
-  <div class="odds">${RG_N.map((n,g)=>`<span style="color:${RG_COL[g]}">${n}<br><b>${pct(w[g]/tot*100)}%</b></span>`).join('')}</div>
+  <div class="odds">${RG_N.map((n,g)=>`<span style="color:${RG_COL[g]}">${n}<br><b>${g===3&&!legendRelicOpen()?'4-10 후':pct(w[g]/tot*100)+'%'}</b></span>`).join('')}</div>
   ${S.freeRelic?`<div class="row"><button class="btn pri grow" data-act="relicFree">무료 상자 열기 (${S.freeRelic}개)</button><button class="btn" data-act="relicFree" data-n="all">모두 열기</button></div>`:''}
   <div class="row"><button class="btn pri grow" data-act="relicDraw" ${S.gold>=relicPrice()&&!relicsAllMax()?'':'disabled'}>유물 상자 열기 · ${fmt(relicPrice())}골드</button><button class="btn" data-act="relicDraw" data-n="10" ${S.gold>=relicPrice10()&&!relicsAllMax()?'':'disabled'}>10회 · ${fmt(relicPrice10())}</button></div>
   ${RG_N.map((n,g)=>{const ks=Object.keys(RELICS).filter(k=>RELICS[k].g===g);const have=ks.reduce((a,k)=>a+(S.relics[k]||0),0);
@@ -1052,6 +1079,12 @@ inv(){const desc={cube:'스킬 각성 개방·재설정 (스킬 화면)',acube:'
   return head('인벤토리')+`<div class="inv-row" style="border-top:0;padding-top:0">${itemIcon('gold',40)}<span class="grow"><b>골드</b><br><span class="sub">상점·강화·유물 상자에 사용</span></span><span class="cnt">${fmt(S.gold)}</span></div>
   ${Object.entries(ITEM_N).map(([k,n])=>`<div class="inv-row">${itemIcon(k,40)}<span class="grow"><b>${n}</b><br><span class="sub">${desc[k]||''}</span></span><span class="cnt">${fmt(S.items[k]||0)}</span></div>`).join('')}
   <div class="row"><button class="btn pri" data-act="tabGo" data-t="shop">상점으로</button><button class="btn" data-act="close">닫기</button></div>`},
+tut(){if(S.tutDone)return null;const s=TUT[S.tut],ok=s.chk();
+  return head(`튜토리얼 ${S.tut+1}/${TUT.length}`)+`<div class="tut-step">${TUT.map((_,i)=>`<i class="${i<=S.tut?'on':''}"></i>`).join('')}</div>
+  <h3 style="margin:0;font-family:var(--f-display);font-weight:400;font-size:21px">${s.t}</h3><p style="margin:0;line-height:1.6">${s.d}</p>
+  <div class="shop-row"><span class="grow"><b>보상</b><br><span class="sub">${tutRewardText(s.r)}</span></span><b style="color:${ok?'var(--good)':'var(--muted)'}">${ok?'완료!':'진행 중'}</b></div>
+  <div class="row"><button class="btn pri" data-act="tutClaim" ${ok?'':'disabled'}>보상 받기</button>${s.go&&!ok?`<button class="btn" data-act="tutGo" data-t="${s.go}">바로 가기</button>`:''}<button class="btn" data-act="close">닫기</button></div>
+  <p class="sub" style="margin:0">1-10 관장을 이기면 튜토리얼이 끝나고, 받지 않은 보상은 그때 한꺼번에 지급됩니다.</p>`},
 traitInfo(k){const t=TRAITS[k];return head(t.n)+`<p><span class="tier" style="color:${TG_COL[t.g]}">${TG_N[t.g]} 특성</span></p><p>${t.d}</p><button class="btn pri" data-act="close">확인</button>`},
 sellMon(uid){const m=monBy(uid);if(!m)return null;return head('포켓몬 판매')+`<p>${D(m.id).name} (Lv.${m.lv}, 특성 ${m.traits.map(k=>TRAITS[k].n).join('·')})를 ${fmt(monSellPrice(m))}골드에 판매할까요? 착용한 스킬은 가방으로 돌아갑니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="sellMonGo" data-uid="${uid}">판매</button><button class="btn" data-act="close">취소</button></div>`},
 reset(){return head('진행 초기화')+`<p>모든 포켓몬, 스킬, 재화가 사라지고 스타팅 선택부터 다시 시작합니다. 되돌릴 수 없어요.</p><div class="row"><button class="btn warn" data-act="resetGo">초기화</button><button class="btn" data-act="close">취소</button></div>`},
@@ -1291,33 +1324,37 @@ setSellG(d,el){S.sellG=+el.value},
 sellLow(){const G=S.sellG||2;const list=S.bag.filter(s=>s.g<=G&&!s.eq&&!s.lock&&isPlain(s));const gold=list.reduce((a,s)=>a+skillSellPrice(s),0);S.gold+=gold;S.bag=S.bag.filter(s=>!list.includes(s));toast(list.length?`${G}등급 이하 ${list.length}개 판매 +${fmt(gold)}골드`:`판매할 ${G}등급 이하 스킬이 없어요.`);renderPanel()},
 tlock(d,el){UI.tlocks[+d.i]=el.checked;renderModal()},
 treroll(d){const m=monBy(+d.uid);if(!m)return;const n=m.traits.length;const locks=UI.tlocks.slice(0,n);const cost=1+locks.filter(Boolean).length;
-  if(S.items.capsule<cost||!locks.some(x=>!x))return;S.items.capsule-=cost;
+  if(S.items.capsule<cost||!locks.some(x=>!x))return;S.items.capsule-=cost;(S.tutF=S.tutF||{}).trait=true;
   const keep=m.traits.filter((k,i)=>locks[i]);m.traits=m.traits.map((k,i)=>{if(locks[i])return k;const nk=rollTrait(keep);keep.push(nk);return nk});
   const best=Math.max(...m.traits.map(k=>TRAITS[k].g));if(best>=2)toast(`<b style="color:${TG_COL[best]}">${TG_N[best]}</b> 특성 획득!`,'gold');renderModal()},
 relicDraw(d){const n=d.n==='10'?10:1;const res={};let spent=0;
   for(let i=0;i<n;i++){if(relicsAllMax())break;const pr=relicPrice();if(S.gold<pr)break;S.gold-=pr;spent+=pr;S.shop.relic=(S.shop.relic||0)+1;const k=drawRelic();if(k)res[k]=(res[k]||0)+1}
-  if(!spent)return;refreshBonus();const best=Math.max(...Object.keys(res).map(k=>RELICS[k].g));
+  if(!spent)return;(S.tutF=S.tutF||{}).buy=true;refreshBonus();const best=Math.max(...Object.keys(res).map(k=>RELICS[k].g));
   if(best>=2)toast(`<b style="color:${RG_COL[best]}">${RG_N[best]}</b> 유물 획득!`,'gold');
   openModal('result',{title:'유물 상자',body:Object.entries(res).map(([k,c])=>`<b style="color:${RG_COL[RELICS[k].g]}">[${RG_N[RELICS[k].g]}] ${RELICS[k].n}</b> +${c} → Lv.${S.relics[k]}`).join('<br>')+`<br><span class="sub">사용 ${fmt(spent)}골드 · 다음 상자 ${fmt(relicPrice())}골드</span>`})},
 relicFree(d){const n=d.n==='all'?S.freeRelic:1;const res={};for(let i=0;i<n&&S.freeRelic>0;i++){if(relicsAllMax())break;S.freeRelic--;const k=drawRelic();if(k)res[k]=(res[k]||0)+1}
   if(!Object.keys(res).length)return;refreshBonus();const best=Math.max(...Object.keys(res).map(k=>RELICS[k].g));if(best>=2)toast(`<b style="color:${RG_COL[best]}">${RG_N[best]}</b> 유물 획득!`,'gold');
   openModal('result',{title:'무료 유물 상자',body:Object.entries(res).map(([k,c])=>`<b style="color:${RG_COL[RELICS[k].g]}">[${RG_N[RELICS[k].g]}] ${RELICS[k].n}</b> +${c} → Lv.${S.relics[k]}`).join('<br>')+`<br><span class="sub">남은 무료 상자 ${S.freeRelic}개</span>`})},
-buyBag(){if(S.bagMax>=BAG_CAP)return;const pr=shopPrice('bag');if(S.gold<pr)return;S.gold-=pr;S.shop.bag=(S.shop.bag||0)+1;S.bagMax=Math.min(BAG_CAP,S.bagMax+5);toast(`스킬 가방 ${S.bagMax}칸`,'gold');renderPanel()},
-buyBox(){if(S.boxMax>=BOX_CAP)return;const pr=shopPrice('box');if(S.gold<pr)return;S.gold-=pr;S.shop.box=(S.shop.box||0)+1;S.boxMax=Math.min(BOX_CAP,S.boxMax+1);toast(`보관함 ${S.boxMax}칸`,'gold');renderPanel()},
+buyBag(){if(S.bagMax>=BAG_CAP)return;const pr=shopPrice('bag');if(S.gold<pr)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.shop.bag=(S.shop.bag||0)+1;S.bagMax=Math.min(BAG_CAP,S.bagMax+5);toast(`스킬 가방 ${S.bagMax}칸`,'gold');renderPanel()},
+buyBox(){if(S.boxMax>=BOX_CAP)return;const pr=shopPrice('box');if(S.gold<pr)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.shop.box=(S.shop.box||0)+1;S.boxMax=Math.min(BOX_CAP,S.boxMax+1);toast(`보관함 ${S.boxMax}칸`,'gold');renderPanel()},
 buyItem(d){const k=d.k;let pr;if(k==='candy')pr=candyPrice();else if(STONES[k])pr=stonePrice();else pr=cubePrice()*(k==='acube'?4:k==='capsule'?2:1);
-  if(S.gold<pr)return;S.gold-=pr;S.items[k]=(S.items[k]||0)+1;if(k==='candy')S.shop.candy=(S.shop.candy||0)+1;if(STONES[k])S.shop.stone=(S.shop.stone||0)+1;
+  if(S.gold<pr)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.items[k]=(S.items[k]||0)+1;if(k==='candy')S.shop.candy=(S.shop.candy||0)+1;if(STONES[k])S.shop.stone=(S.shop.stone||0)+1;
   toast(`${ITEM_N[k]} 구매 (보유 ${S.items[k]})`,'gold');renderPanel()},
-buyEgg(){const pr=eggPrice();if(S.gold<pr||S.mons.length>=S.boxMax)return;S.gold-=pr;S.shop.egg=(S.shop.egg||0)+1;
+buyEgg(){const pr=eggPrice();if(S.gold<pr||S.mons.length>=S.boxMax)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.shop.egg=(S.shop.egg||0)+1;
   const pool=DEX.filter(p=>!p.prev&&!LEGEND.includes(p.id)).map(p=>p.id);const m=capture(pick(pool),5,{admin:false});if(m)log(`알에서 <b>${D(m.id).name}</b>가 태어났다`);renderPanel()},
-buySkillBox(){const pr=skillBoxPrice();if(S.gold<pr||S.bag.length>=S.bagMax)return;S.gold-=pr;const s=dropSkill([pick(TK)],true,true);
+buySkillBox(){const pr=skillBoxPrice();if(S.gold<pr||S.bag.length>=S.bagMax)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;const s=dropSkill([pick(TK)],true,true);
   if(s)toast(`<b style="color:${GRADE_COL[s.g]}">${s.g}등급</b> ${T[s.t]} 「${MV(s).name}」 획득`,'gold');renderPanel()},
 useCandy(d){const m=monBy(+d.uid);if(!m)return;let n=0;do{if(!S.items.candy||m.lv>=LV_MAX)break;S.items.candy--;m.lv++;m.exp=0;n++;checkEvo(m)}while(d.all);if(R.rt[m.uid])syncMax(m);R.pver++;if(n)toast(`${D(m.id).name} Lv.${m.lv} (사탕 ${n}개)`,'gold');renderModal()},
 inv(){openModal('inv')},
+tut(){if(!S.tutDone)openModal('tut')},
+tutClaim(){if(S.tutDone)return;const s=TUT[S.tut];if(!s.chk())return;tutGive(s.r);toast(`튜토리얼 보상: ${tutRewardText(s.r)}`,'gold');
+  if(S.tut>=TUT.length-1){S.tutDone=true;closeModal();openModal('result',{title:'튜토리얼 완료!',body:'모든 단계를 마쳤어요. 이제 본격적으로 모험을 즐겨 보세요!'});return}S.tut++;renderModal();renderHeader()},
+tutGo(d){closeModal();ACT.tab(d)},
 stageSel(){openModal('stageSel')},
 toggleRepeat(){S.repeat=!S.repeat;toast(S.repeat?'현재 스테이지 반복: 보스를 잡아도 이 스테이지에 머뭅니다.':'반복 끔: 보스를 잡으면 다음 스테이지로 넘어갑니다.');renderHeader();if(UI.modal&&UI.modal.fn==='stageSel')renderModal()},
 goStage(d){const st=+d.s;if(st<1||st>S.maxStage)return;S.stage=st;S.kills=0;S.mine=false;resetBattle();closeModal();toast(`${stageLabel(st)}로 이동${farmPen(st)?` (보상 -${farmPen(st)}%)`:''}`)},
 equipTo(d){openModal('equipTo',+d.uid)},
-buyOff(){if(offMaxH()>=24)return;const pr=offPrice();if(S.gold<pr)return;S.gold-=pr;S.shop.off=(S.shop.off||0)+1;toast(`오프라인 보상 최대 ${offMaxH()}시간`,'gold');renderPanel()},
+buyOff(){if(offMaxH()>=24)return;const pr=offPrice();if(S.gold<pr)return;S.gold-=pr;(S.tutF=S.tutF||{}).buy=true;S.shop.off=(S.shop.off||0)+1;toast(`오프라인 보상 최대 ${offMaxH()}시간`,'gold');renderPanel()},
 dexInfo(d){openModal('dexInfo',+d.id)},
 copyCode(){const ta=$('#myCode');const c=myCode();const done=()=>toast('친구 코드를 복사했어요','gold');
   try{navigator.clipboard.writeText(c).then(done,()=>{ta.focus();ta.select();toast('코드를 길게 눌러 복사해 주세요')})}catch(e){ta.focus();ta.select();toast('코드를 길게 눌러 복사해 주세요')}},
@@ -1345,10 +1382,10 @@ resetAsk(){openModal('reset')},
 resetGo(){try{localStorage.removeItem(KEY)}catch(e){}S=null;UI.god=false;closeModal();showStarter()},
 starter(d){if(S)S.seenPatch=GAME_VERSION;const nm=(($('#pname')||{}).value||'').trim().slice(0,10);if(!nm){toast('트레이너 이름을 입력해 주세요','bad');const i=$('#pname');if(i)i.focus();return}
   const st=STARTERS[+d.i];S=newState();S.name=nm;S.seenPatch=GAME_VERSION;S.starter=st[0];refreshBonus();
-  const ivA=STAT_K.map(()=>61+Math.floor(rnd()*20));const m=makeMon(st[0],1,[st[3],rollTrait([st[3]])],ivA);S.mons.push(m);S.party=[m.uid];
-  const s=makeSkill(st[1],1,MOVES[st[1]].findIndex(x=>x[0]===st[2]));s.isNew=false;S.bag.push(s);m.skills[0]=s.uid;s.eq=m.uid;
-  const s2=makeSkill('N',1,0);s2.isNew=false;S.bag.push(s2);m.skills[1]=s2.uid;s2.eq=m.uid;S.freeRelic=10;
-  S.gold=30000;setTimeout(()=>openModal('result',{title:'모험을 시작합니다!',body:`${itemIcon('gold',28)} 스타팅 축하금 <b>30,000골드</b>와 ${itemIcon('relic',24)} <b>유물 상자 10개</b>를 받았어요. 유물 탭에서 무료로 열어 보세요.`}),300);
+  const ivA=STAT_K.map(()=>81);const m=makeMon(st[0],1,[st[3],rollTrait([st[3]])],ivA);S.mons.push(m);S.party=[m.uid];
+  const s=makeSkill(st[1],2,MOVES[st[1]].findIndex(x=>x[0]===st[2]));s.isNew=false;S.bag.push(s);m.skills[0]=s.uid;s.eq=m.uid;
+  const s2=makeSkill('N',2,0);s2.isNew=false;S.bag.push(s2);m.skills[1]=s2.uid;s2.eq=m.uid;S.freeRelic=20;S.tut=0;S.tutDone=false;S.tutF={};
+  S.gold=30000;setTimeout(()=>openModal('result',{title:'모험을 시작합니다!',body:`${itemIcon('gold',28)} 스타팅 축하금 <b>30,000골드</b>와 ${itemIcon('relic',24)} <b>유물 상자 20개</b>를 받았어요. 골드 옆 <b>튜토리얼</b> 버튼을 눌러 하나씩 따라가 보세요!`}),300);
   log(`트레이너 <b>${esc(nm)}</b>, <b>${D(st[0]).name}</b>와 모험을 시작했다! (특성: ${TRAITS[st[3]].n})`);$('#starter').hidden=true;resetBattle();renderPanel();save()}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled||b.tagName==='INPUT')return;const k=b.dataset.act;
@@ -1358,7 +1395,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='admPw
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 
 /* ================= 시작/루프 ================= */
-function showStarter(){$('#starterList').innerHTML=STARTERS.map((s,i)=>{const p=D(s[0]);const rec=s[0]===4;return`<button class="st-card" data-act="starter" data-i="${i}" ${rec?'style="border-color:var(--accent)"':''}>${orb(s[0],72)}<div><div class="mon-n">${p.name}${rec?' <small style="color:var(--accent)">추천</small>':''}</div><div>${p.types.map(chip).join('')}</div><div class="sub">개체값 A등급 · 특성 ${TRAITS[s[3]].n} + 무작위 1개<br>시작 스킬: 1등급 ${s[2]}, 1등급 전광석화</div></div></button>`}).join('');$('#starter').hidden=false}
+function showStarter(){$('#starterList').innerHTML=STARTERS.map((s,i)=>{const p=D(s[0]);const rec=s[0]===4;return`<button class="st-card" data-act="starter" data-i="${i}" ${rec?'style="border-color:var(--accent)"':''}>${orb(s[0],72)}<div><div class="mon-n">${p.name}${rec?' <small style="color:var(--accent)">추천</small>':''}</div><div>${p.types.map(chip).join('')}</div><div class="sub">개체값 S등급 · 특성 ${TRAITS[s[3]].n} + 무작위 1개<br>시작 스킬: 2등급 ${s[2]}, 2등급 전광석화</div></div></button>`}).join('');$('#starter').hidden=false}
 function resetBattle(){R.stageT=0;R.enemies=[];R.boss=false;R.waveDelay=0.3;R.rt={};R.ever++;R.pver++;if(S)partyMons().forEach(getRt)}
 function offlineReward(sec){if(!S||!S.party.length)return;sec=Math.min(sec,offMaxH()*3600);if(sec<60)return;
   const eff=0.2+B.offEff/100;const kills=sec*clamp(S.kps||0.3,0.05,5);const lv=enemyLv(S.stage);const reg=REG();
@@ -1374,7 +1411,7 @@ function checkUpdate(){if(!window.__BUILD_ID||!S)return;fetch('version.json?t='+
 function boot(){
   $('#ver').textContent=`v${GAME_VERSION}`;cvInit();preloadSprites();
   const saved=load();
-  if(saved&&saved.party&&saved.party.length){S=saved;S.ver=GAME_VERSION;S.items=Object.assign(newState().items,S.items);const base=newState();if(S.freeRelic===undefined)S.freeRelic=0;for(const k of['seen','friends','pvp','badges','name','pid','starter','autoSynth','sellG','kps'])if(S[k]===undefined)S[k]=base[k];if(S.starter===4&&S.mons[0])S.starter=[1,4,7].includes(S.mons[0].id)?S.mons[0].id:4;
+  if(saved&&saved.party&&saved.party.length){S=saved;S.ver=GAME_VERSION;S.items=Object.assign(newState().items,S.items);const base=newState();if(S.freeRelic===undefined)S.freeRelic=0;if(S.tut===undefined){S.tut=0;S.tutDone=S.maxStage>10;S.tutF={}}for(const k of['seen','friends','pvp','badges','name','pid','starter','autoSynth','sellG','kps'])if(S[k]===undefined)S[k]=base[k];if(S.starter===4&&S.mons[0])S.starter=[1,4,7].includes(S.mons[0].id)?S.mons[0].id:4;
     S.caught=S.caught||{};S.shop=S.shop||{};S.bagMax=S.bagMax||BAG_BASE;S.boxMax=S.boxMax||BOX_BASE;delete S.items.chest;for(const k in S.relics)if(!RELICS[k])delete S.relics[k];refreshBonus();resetBattle();renderPanel();offlineReward((Date.now()-(S.last||Date.now()))/1000);if(S.seenPatch!==GAME_VERSION){S.seenPatch=GAME_VERSION;if(!UI.modal)openModal('patch')}}
   else showStarter();
   let last=performance.now();
